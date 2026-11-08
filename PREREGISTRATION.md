@@ -38,3 +38,17 @@ Bare baseline (v0-bare) vs final incumbent on test and test_mirror:
 - judge reliability: re-judge a subsample with the same judge and with a second judge family
 - robustness: the primary comparison repeated on the deterministic-only score (move + line + motif)
 - dev-to-test gap for the final incumbent, reported as measured overfitting to dev
+
+## Amendment 1 (2026-11-08, before any test or dev result was graded)
+
+An audit of the first baseline outputs found the "bare" subject calling `bash` (writing python-chess
+scripts). Cause: the Copilot CLI ignores an empty `--available-tools ""`, so a config with no tools
+silently received the full built-in toolset. The same applied to the judge and teacher calls.
+
+Fix: no-tool sessions now pass a sentinel `--available-tools=__none__` and do not grant
+`--allow-all-tools`; every run records tool calls outside its allowlist as `violations`, and runs with
+violations are never cached or graded. Verified by probe: a no-tool session executes no tools; an
+allowlisted session executes only its allowlisted MCP tools.
+
+All v0-bare outputs produced before the fix (dev and test, ungraded) were deleted and regenerated.
+No design, metric, split, or acceptance rule changed.

@@ -50,7 +50,7 @@ def run_split(config, split, run_tag=None, workers=8, limit=None):
     def one(it):
         rec = run(prompt_for(it, skill), home, allowed, SUBJECT_MODEL)
         rec["id"] = it["id"]
-        if rec["final"] or rec["exit"] == 0:
+        if (rec["final"] or rec["exit"] == 0) and not rec["violations"]:
             (outdir / f"{it['id']}.json").write_text(json.dumps(rec))
         return rec
 

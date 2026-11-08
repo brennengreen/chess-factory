@@ -27,8 +27,13 @@ def run(prompt, home, allowed, model, effort=None, timeout=420):
     with tempfile.TemporaryDirectory() as cwd:
         usage = Path(cwd) / "usage.json"
         cmd = ["copilot", "-p", prompt, "--model", model, "--no-custom-instructions", "--disable-builtin-mcps",
-               "--allow-all-tools", "--no-ask-user", "--no-auto-update", "--output-format", "json",
-               "--usage-output-file", str(usage), "--available-tools", *(allowed or [""])]
+               "--no-ask-user", "--no-auto-update", "--output-format", "json", "--usage-output-file", str(usage)]
+        # An empty --available-tools is ignored by the CLI (the model then gets bash etc.), so "no tools"
+        # uses a sentinel name and withholds tool approval entirely.
+        if allowed:
+            cmd += ["--allow-all-tools", f"--available-tools={','.join(allowed)}"]
+        else:
+            cmd += ["--available-tools=__none__"]
         if effort:
             cmd += ["--reasoning-effort", effort]
         env = dict(os.environ, COPILOT_HOME=str(home))
@@ -51,6 +56,7 @@ def run(prompt, home, allowed, model, effort=None, timeout=420):
                 rec["final"] = d["content"]
             elif e.get("type") == "tool.execution_start":
                 rec["tool_calls"].append({"tool": d.get("toolName"), "args": d.get("arguments")})
+        rec["violations"] = [t["tool"] for t in rec["tool_calls"] if t["tool"] not in (allowed or [])]
         if usage.exists():
             u = json.loads(usage.read_text())
             rec["aiu"] = u.get("totalNanoAiu", 0) / 1e9
