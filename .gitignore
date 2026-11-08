@@ -1,0 +1,4 @@
+.venv/
+runs/homes/
+data/puzzles_head.csv
+__pycache__/
