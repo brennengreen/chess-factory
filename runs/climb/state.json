@@ -1,0 +1,492 @@
+{
+  "incumbent": "r1a",
+  "history": [
+    {
+      "round": 1,
+      "incumbent": "v0-bare",
+      "diagnosis": "The model never calls a tool and reads the board from memory. It hallucinates geometry: it claims checks through blocking pieces, gives illegal moves, and builds lines on squares it never verified, so 58/60 lines are wrong or illegal. Even when the move is right, the explanation is wrong, because the model narrates an imagined position instead of the real one.",
+      "tool_request": "A 'square_info' perception tool. Given a square, it would list every piece of each side that attacks or defends that square, including x-ray attackers behind a blocker. This would help the model spot overloaded defenders and blocked lines without doing any search or evaluation.",
+      "passages": [
+        "P1037",
+        "P1052",
+        "P0905",
+        "P0245",
+        "P0244",
+        "P0824",
+        "P0844",
+        "P0261",
+        "P0082",
+        "P0882"
+      ],
+      "candidates": [
+        {
+          "name": "r1a",
+          "hypothesis": "The score is held back mainly by perception and legality errors, so a mandatory tool-verification workflow (board, then legal checks and captures, then inspect every candidate and the reply) will fix moves, lines and explanations together.",
+          "tools": [
+            "board",
+            "legal_moves",
+            "threats",
+            "inspect_move"
+          ],
+          "citations": [
+            "P0245",
+            "P0905",
+            "P1052",
+            "P0882",
+            "P0844",
+            "P1037",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": 30.725,
+            "lo": 24.425,
+            "hi": 37.09166666666667,
+            "lo_one_sided": 25.483333333333334,
+            "p_wilcoxon": 1.0560127371206592e-12,
+            "n": 120,
+            "sd_diff": 35.44340085073026
+          },
+          "dev_mean": [
+            42.925,
+            37.25833333333333,
+            48.8
+          ]
+        },
+        {
+          "name": "r1b",
+          "hypothesis": "The score is held back mainly by poor candidate selection: the model grabs a superficially attractive check instead of systematically looking for defenders to remove, in-between moves and double attacks, so a coach-style tactical checklist backed by threat and inspection tools will raise move accuracy.",
+          "tools": [
+            "board",
+            "threats",
+            "inspect_move"
+          ],
+          "citations": [
+            "P0261",
+            "P0245",
+            "P0844",
+            "P1037",
+            "P0882",
+            "P0905",
+            "P1052"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": 14.641666666666667,
+            "lo": 8.841458333333334,
+            "hi": 20.466874999999995,
+            "lo_one_sided": 9.758333333333333,
+            "p_wilcoxon": 2.0991713639338137e-05,
+            "n": 120,
+            "sd_diff": 33.01509607175861
+          },
+          "dev_mean": [
+            26.841666666666665,
+            21.491458333333334,
+            32.241875
+          ]
+        }
+      ],
+      "incumbent_dev_mean": [
+        12.2,
+        9.158333333333333,
+        15.466874999999996
+      ],
+      "accepted": true,
+      "new_incumbent": "r1a"
+    },
+    {
+      "round": 2,
+      "incumbent": "r1a",
+      "diagnosis": "The model treats any check or capture as forcing. It then assumes the opponent's reply that suits it, so it often misses that the moved piece can simply be taken back, frequently by the king. Its checks-first habit also hides quiet winning moves: unmasking a discovered attack, attacking a pinned or overloaded piece, or a pawn break. Long, unfocused searches (up to 30+ calls) produce invented forced lines and explanations that the tools never confirmed, which drags down move, line, motif and accuracy scores together.",
+      "tool_request": "Add a capture flag to inspect_move: for the moved piece, list every enemy piece (including the king) that can legally capture it on its new square, and every own piece that defends it there. Also add a line_view tool: for a given piece, list the first piece it meets along each line and any piece directly behind it (x-ray), so discovered attacks and pins are visible without the model having to imagine the lines. Both are perception only, with no evaluation.",
+      "passages": [
+        "P1037",
+        "P1052",
+        "P0905",
+        "P0245",
+        "P0244",
+        "P0824",
+        "P0882",
+        "P0261",
+        "P0885",
+        "P0945"
+      ],
+      "candidates": [
+        {
+          "name": "r2a",
+          "hypothesis": "The main leak is hope-chess. The model does not test the opponent's strongest reply, especially recapture of the moved piece. A mandatory refutation check plus square_info on the destination square will stop it from choosing sacrifices that lose material.",
+          "tools": [
+            "board",
+            "legal_moves",
+            "threats",
+            "inspect_move",
+            "square_info"
+          ],
+          "citations": [
+            "P0245",
+            "P1037",
+            "P0905",
+            "P1052",
+            "P0244",
+            "P0885",
+            "P0945",
+            "P0882",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": -1.9416666666666667,
+            "lo": -7.95,
+            "hi": 4.05020833333333,
+            "lo_one_sided": -6.966666666666667,
+            "p_wilcoxon": 0.5938288705719019,
+            "n": 120,
+            "sd_diff": 33.908253831053415
+          },
+          "dev_mean": [
+            40.983333333333334,
+            34.799791666666664,
+            47.09208333333333
+          ]
+        },
+        {
+          "name": "r2b",
+          "hypothesis": "The main leak is candidate generation. A checks-first search misses quiet winning moves (discovered attacks, hits on pinned or overloaded defenders, pawn breaks). Generating candidates from targets and from double threats, with a tight search budget, will find more right moves and give more accurate motifs.",
+          "tools": [
+            "board",
+            "legal_moves",
+            "threats",
+            "inspect_move"
+          ],
+          "citations": [
+            "P0245",
+            "P0885",
+            "P0945",
+            "P1037",
+            "P0905",
+            "P0882",
+            "P0824",
+            "P1052",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": -9.083333333333334,
+            "lo": -15.058333333333334,
+            "hi": -3.191666666666667,
+            "lo_one_sided": -14.116666666666667,
+            "p_wilcoxon": 0.027133952191969513,
+            "n": 120,
+            "sd_diff": 33.22816041037636
+          },
+          "dev_mean": [
+            33.84166666666667,
+            27.925,
+            40.158541666666665
+          ]
+        }
+      ],
+      "incumbent_dev_mean": [
+        42.925,
+        37.09166666666667,
+        48.541666666666664
+      ],
+      "accepted": false,
+      "new_incumbent": "r1a"
+    },
+    {
+      "round": 3,
+      "incumbent": "r1a",
+      "diagnosis": "The model generates candidates almost only from checks and captures, so quiet moves, trapped pieces, discovered attacks and zugzwang score near zero, and the hit rate drops sharply above a 1800 puzzle rating. It also accepts lines where the opponent cooperates. It assumes a weak reply, ignores recaptures and counter-checks, and keeps exploring the same failing idea (up to 50 inspect_move calls). Its explanations then state material gains the tools never showed (judge accuracy 0.20).",
+      "tool_request": "piece_mobility: for one piece, list every square it can legally move to and mark each as safe or unsafe (attacked by a cheaper enemy piece, or attacked more times than defended). It only reports perception; it does not search or evaluate. It would let the model spot trapped pieces and zugzwang-style restrictions directly.",
+      "passages": [
+        "P1037",
+        "P1052",
+        "P0905",
+        "P0245",
+        "P0244",
+        "P0824",
+        "P0882",
+        "P0261",
+        "P0082",
+        "P0844"
+      ],
+      "candidates": [
+        {
+          "name": "r3a",
+          "hypothesis": "The score is held back by candidate generation: adding a mobility/trapped-piece scan and a discovered-attack scan (via line_view and square_info) will surface the quiet and discovery moves the model never considers.",
+          "tools": [
+            "board",
+            "threats",
+            "legal_moves",
+            "inspect_move",
+            "line_view",
+            "square_info"
+          ],
+          "citations": [
+            "P0245",
+            "P1037",
+            "P0244",
+            "P0905",
+            "P1052",
+            "P0082",
+            "P0882",
+            "P0844",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": -1.5833333333333333,
+            "lo": -7.891875,
+            "hi": 4.450208333333331,
+            "lo_one_sided": -6.891666666666667,
+            "p_wilcoxon": 0.7904435588506574,
+            "n": 120,
+            "sd_diff": 34.683583730522386
+          },
+          "dev_mean": [
+            41.34166666666667,
+            35.633125,
+            47.05
+          ]
+        },
+        {
+          "name": "r3b",
+          "hypothesis": "The score is held back by verification and honesty: the model assumes cooperative replies and thrashes in long searches. A strict refute-first protocol with a short budget and tool-copied explanations will raise both move accuracy and the explanation's accuracy score.",
+          "tools": [
+            "board",
+            "threats",
+            "legal_moves",
+            "inspect_move",
+            "square_info"
+          ],
+          "citations": [
+            "P0245",
+            "P1037",
+            "P1052",
+            "P0905",
+            "P0882",
+            "P0844",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": -6.758333333333334,
+            "lo": -13.200208333333332,
+            "hi": -0.2497916666666697,
+            "lo_one_sided": -12.183333333333334,
+            "p_wilcoxon": 0.02811493524134193,
+            "n": 120,
+            "sd_diff": 36.509696152738194
+          },
+          "dev_mean": [
+            36.166666666666664,
+            29.991666666666667,
+            42.48354166666667
+          ]
+        }
+      ],
+      "incumbent_dev_mean": [
+        42.925,
+        37.09166666666667,
+        48.541666666666664
+      ],
+      "accepted": false,
+      "new_incumbent": "r1a"
+    },
+    {
+      "round": 4,
+      "incumbent": "r1a",
+      "diagnosis": "The model takes the first flashy check or capture and builds lines in which the opponent cooperates. It rarely finds the opponent's strongest reply or considers quiet moves, so pin, quietMove and discoveredAttack positions score near zero. Its searches also wander, with up to 70 calls, and its explanations state relations no tool reported, which keeps accuracy at 0.23.",
+      "tool_request": "A 'compare_moves' perception tool: given several candidate moves, show for each one, side by side, what inspect_move reports (check status, newly loose pieces, the opponent's checks and captures in reply), with no evaluation. This would cut breadth-first triage from many calls to one.",
+      "passages": [
+        "P1037",
+        "P1052",
+        "P0905",
+        "P0245",
+        "P0244",
+        "P0824",
+        "P0844",
+        "P0261",
+        "P0082",
+        "P1069"
+      ],
+      "candidates": [
+        {
+          "name": "r4a",
+          "hypothesis": "The model cannot see lines, pins and defenders. Adding line_view and square_info, and teaching it to work pins and to attack overworked defenders, will fix the pin, quietMove and discoveredAttack failures.",
+          "tools": [
+            "board",
+            "threats",
+            "legal_moves",
+            "inspect_move",
+            "line_view",
+            "square_info"
+          ],
+          "citations": [
+            "P0245",
+            "P0905",
+            "P1069",
+            "P1052",
+            "P0844",
+            "P1037",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": -7.275,
+            "lo": -13.833333333333334,
+            "hi": -0.625,
+            "lo_one_sided": -12.700416666666666,
+            "p_wilcoxon": 0.0448007209315433,
+            "n": 120,
+            "sd_diff": 36.47169099037607
+          },
+          "dev_mean": [
+            35.65,
+            29.84125,
+            41.675
+          ]
+        },
+        {
+          "name": "r4b",
+          "hypothesis": "The board view is good enough. What fails is search discipline: breadth-first triage, assuming the opponent's best reply, and a strict call budget will raise move accuracy, and copying facts straight from tool output will raise explanation accuracy.",
+          "tools": [
+            "board",
+            "threats",
+            "legal_moves",
+            "inspect_move"
+          ],
+          "citations": [
+            "P0245",
+            "P0905",
+            "P1052",
+            "P1069",
+            "P0844",
+            "P1037",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": -7.883333333333334,
+            "lo": -14.325,
+            "hi": -1.4414583333333364,
+            "lo_one_sided": -13.167083333333332,
+            "p_wilcoxon": 0.010587180494702138,
+            "n": 120,
+            "sd_diff": 35.710362249475935
+          },
+          "dev_mean": [
+            35.041666666666664,
+            29.408333333333335,
+            40.708333333333336
+          ]
+        }
+      ],
+      "incumbent_dev_mean": [
+        42.925,
+        37.09166666666667,
+        48.541666666666664
+      ],
+      "accepted": false,
+      "new_incumbent": "r1a"
+    },
+    {
+      "round": 5,
+      "incumbent": "r1a",
+      "diagnosis": "The model grabs the first capture or check that looks good and stops one ply too early. It never confirms that the 'free' piece is undefended, misses the recapture or in-between move that refutes it, and overlooks quieter sacrifices and checks that win more. Its explanations then claim attacks and defences it never saw in a tool output, and it names motifs loosely. Tool calls are spent on unfocused inspect_move sprawl rather than on checking who controls the key squares.",
+      "tool_request": "play_line: apply a sequence of SAN moves from a FEN and report, for each ply, whether it is legal, whether it gives check or mate, and what it captures, plus the final board and material. This is perception only (no search or evaluation), and it would let the model verify its whole main line in one call instead of chaining many inspect_move calls.",
+      "passages": [
+        "P1037",
+        "P1052",
+        "P0905",
+        "P0245",
+        "P0244",
+        "P0824",
+        "P0882",
+        "P0261",
+        "P1069",
+        "P0082"
+      ],
+      "candidates": [
+        {
+          "name": "r5a",
+          "hypothesis": "Errors are mainly perception errors (false 'undefended', missed x-rays, pins and discovered lines), so the fix is to enable square_info and line_view and require that every claimed relation be verified with them before a move is chosen or explained.",
+          "tools": [
+            "board",
+            "legal_moves",
+            "threats",
+            "inspect_move",
+            "square_info",
+            "line_view"
+          ],
+          "citations": [
+            "P0245",
+            "P1037",
+            "P0882",
+            "P1069",
+            "P0905",
+            "P1052",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": 0.5833333333333334,
+            "lo": -6.083541666666666,
+            "hi": 7.133541666666664,
+            "lo_one_sided": -5.025,
+            "p_wilcoxon": 0.8413307174434006,
+            "n": 120,
+            "sd_diff": 37.09732449373994
+          },
+          "dev_mean": [
+            43.50833333333333,
+            36.93333333333333,
+            49.991875
+          ]
+        },
+        {
+          "name": "r5b",
+          "hypothesis": "Errors are mainly candidate-selection and stopping errors (taking the first greedy capture, not comparing against a forcing alternative, stopping before the recapture), so a disciplined comparison and end-of-line counting procedure with the same tools will raise move accuracy and motif naming.",
+          "tools": [
+            "board",
+            "legal_moves",
+            "threats",
+            "inspect_move"
+          ],
+          "citations": [
+            "P0245",
+            "P1037",
+            "P0882",
+            "P1052",
+            "P0905",
+            "P0261"
+          ],
+          "leaks": [],
+          "dev": {
+            "diff": -2.158333333333333,
+            "lo": -7.93375,
+            "hi": 3.5502083333333303,
+            "lo_one_sided": -6.93375,
+            "p_wilcoxon": 0.6973295907060857,
+            "n": 120,
+            "sd_diff": 31.97083645689461
+          },
+          "dev_mean": [
+            40.766666666666666,
+            34.724583333333335,
+            47.016875
+          ]
+        }
+      ],
+      "incumbent_dev_mean": [
+        42.925,
+        37.09166666666667,
+        48.541666666666664
+      ],
+      "accepted": false,
+      "new_incumbent": "r1a"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "hypothesis": "The board view is good enough. What fails is search discipline: breadth-first triage, assuming the opponent's best reply, and a strict call budget will raise move accuracy, and copying facts straight from tool output will raise explanation accuracy.",
+  "citations": [
+    "P0245",
+    "P0905",
+    "P1052",
+    "P1069",
+    "P0844",
+    "P1037",
+    "P0261"
+  ]
+}

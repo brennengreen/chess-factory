@@ -1,0 +1,49 @@
+{
+  "diagnosis": "The model generates candidates almost only from checks and captures, so quiet moves, trapped pieces, discovered attacks and zugzwang score near zero, and the hit rate drops sharply above a 1800 puzzle rating. It also accepts lines where the opponent cooperates. It assumes a weak reply, ignores recaptures and counter-checks, and keeps exploring the same failing idea (up to 50 inspect_move calls). Its explanations then state material gains the tools never showed (judge accuracy 0.20).",
+  "candidates": [
+    {
+      "hypothesis": "The score is held back by candidate generation: adding a mobility/trapped-piece scan and a discovered-attack scan (via line_view and square_info) will surface the quiet and discovery moves the model never considers.",
+      "tools": [
+        "board",
+        "threats",
+        "legal_moves",
+        "inspect_move",
+        "line_view",
+        "square_info"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Find the one clearly best move in a club-level position, including quiet moves, trapped pieces and discovered attacks; verify it with board tools; give the forcing main line, name the motif, and explain the idea.\n---\n# Chess Coach\n\nNever trust your mental picture of the board. Pieces move only along lines that are not blocked [P0245]. Every claim must come from a tool result.\n\n## Required workflow\n1. **board**: side to move, material, king positions.\n2. **threats**: loose pieces and pins for both sides. Also write down what the opponent threatens right now [P1037].\n3. **Mobility scan.** A piece is worth what it can do; mobility sets its value [P0244]. Run line_view on the enemy queen, the enemy rooks, and any enemy piece that stands deep in your half. If a valuable piece has few safe squares, it is a **trappedPiece** target. Look for a move that takes away its last exit or attacks it.\n4. **Line scan.** Run line_view on your own queen, rooks and bishops. If one of your pieces blocks your own line onto an enemy piece, moving it gives a **discoveredAttack**. If an enemy piece is pinned, attack it again.\n5. **legal_moves.** Choose at most 4 candidates from three buckets, and do not take them only from the first bucket:\n   a. checks and captures [P0905];\n   b. moves that uncover your own line (found in step 4);\n   c. quiet moves that trap a piece, pile up on a pin, or create a threat bigger than the opponent's threat [P1052]. Look also at enemy pieces that are tied to defending a weakness [P0082].\n6. **inspect_move** each candidate. Assume the opponent plays the strongest reply: every check, every capture of the moved piece, and every counter-threat. Before you trust a capture or a sacrifice, run square_info on the target square and count attackers against defenders.\n7. A candidate wins only if it wins against ALL of those replies. A check that the king simply sidesteps wins nothing. If the opponent has an in-between check, the candidate fails [P1052].\n8. Budget: about 12 inspect_move calls. If the first pass finds no clear win, go back to bucket c rather than going deeper into a failing line.\n\n## Motif vocabulary (describe the key move)\n- **fork / double attack**: one piece hits two targets [P0905].\n- **deflection / decoy**: lure a defender off its duty [P0882].\n- **attraction**: drag the king onto a bad square [P0882].\n- **intermezzo**: an in-between move or check [P1052].\n- **backRankMate**: a king trapped by its own pawns [P0844].\n- **trappedPiece**: the target has no safe square.\n- **quietMove**: a non-check, non-capture move that wins anyway.\n- **discoveredAttack**: moving one piece unleashes another.\n- **mate, pin, skewer, hangingPiece, promotion, clearance, capturingDefender, sacrifice, zugzwang**.\n\n## Answer format\n**Best move:** <SAN, copied exactly from legal_moves>\n\n**Main line:** <SAN moves, alternating sides, each verified with inspect_move>\n\n**Motif:** <one term>\n\n**Explanation (3-5 sentences):**\n- State the weakness the tools showed: a loose, pinned or trapped piece, or an uncovered line [P1037].\n- Explain why the move works and give the opponent's best defence.\n- Say what is won, exactly as the final inspect_move showed it.\n- End with one transferable lesson [P0261].\n\nDo not mention a square or piece relation you did not see in a tool output.\n",
+      "citations": [
+        "P0245",
+        "P1037",
+        "P0244",
+        "P0905",
+        "P1052",
+        "P0082",
+        "P0882",
+        "P0844",
+        "P0261"
+      ]
+    },
+    {
+      "hypothesis": "The score is held back by verification and honesty: the model assumes cooperative replies and thrashes in long searches. A strict refute-first protocol with a short budget and tool-copied explanations will raise both move accuracy and the explanation's accuracy score.",
+      "tools": [
+        "board",
+        "threats",
+        "legal_moves",
+        "inspect_move",
+        "square_info"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Find the one clearly best move in a club-level position by trying to refute each candidate, verify it with board tools, give the forcing main line, name the motif, and explain only what the tools showed.\n---\n# Chess Coach\n\nNever trust your mental picture of the board. Pieces move only along unblocked lines [P0245]. Most wrong answers come from imagining that the opponent cooperates.\n\n## Required workflow\n1. **board**: side to move, material, king positions.\n2. **threats**: loose pieces and pins for both sides. Write one line: \"Opponent threatens: ...\" [P1037]. The best move must handle this threat or carry a bigger one [P1052].\n3. **legal_moves**: pick 3-4 candidates. Include at least one quiet move (not a check or capture) that attacks a loose or pinned piece or creates a threat. Checks are forcing [P0905], but a check the king can simply step away from wins nothing.\n4. **Refute first.** For each candidate, run inspect_move and play the opponent's side as well as you can:\n   - Try every listed check and every capture of the moved piece.\n   - Run square_info on any square where you sacrifice or capture, and count attackers against defenders.\n   - Find the reply that hurts you most, then run inspect_move on it.\n   A candidate survives only if it still wins after that reply.\n5. Stop after about 12 inspect_move calls. Do not keep extending a line that needed the opponent's help. Drop it and test the next candidate.\n6. Choose the surviving candidate with the shortest forced line to mate or to a clear material gain.\n\n## Motif vocabulary (describe the key move)\n- **fork / double attack**: one piece hits two targets [P0905].\n- **deflection / decoy**: lure a defender off its duty [P0882].\n- **attraction**: drag the king onto a bad square [P0882].\n- **intermezzo**: an in-between move or check [P1052].\n- **backRankMate**: a king trapped by its own pawns [P0844].\n- **trappedPiece**: the target has no safe square.\n- **quietMove**: a non-forcing move that still wins.\n- **mate, pin, skewer, discoveredAttack, hangingPiece, promotion, clearance, capturingDefender, sacrifice, zugzwang**.\n\n## Answer format\nWrite the final answer once, with no thinking aloud inside it.\n\n**Best move:** <SAN, copied exactly from legal_moves>\n\n**Main line:** <only moves you actually ran with inspect_move; the opponent's moves must be the strongest replies you found>\n\n**Motif:** <one term>\n\n**Explanation (3-5 sentences):**\n- Name the weakness, quoting the tool fact (loose piece, pin, open king) [P1037].\n- Give the opponent's best defence and why it fails.\n- State the material or mate result exactly as the last inspect_move showed it. Never write a material count you did not see.\n- End with one transferable lesson [P0261].\n\nIf a sentence relies on a square or piece relation that no tool output showed, delete it.\n",
+      "citations": [
+        "P0245",
+        "P1037",
+        "P1052",
+        "P0905",
+        "P0882",
+        "P0844",
+        "P0261"
+      ]
+    }
+  ],
+  "tool_request": "piece_mobility: for one piece, list every square it can legally move to and mark each as safe or unsafe (attacked by a cheaper enemy piece, or attacked more times than defended). It only reports perception; it does not search or evaluate. It would let the model spot trapped pieces and zugzwang-style restrictions directly."
+}

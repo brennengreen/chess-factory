@@ -1,0 +1,9 @@
+{
+  "hypothesis": "Judging each candidate by the material balance at the end of its verified line, rather than by the first capture or check, will steer the model toward decoy sacrifices and intermezzo captures and away from empty checks and bare material grabs.",
+  "citations": [
+    "P0882",
+    "P1052",
+    "P0905",
+    "P0245"
+  ]
+}

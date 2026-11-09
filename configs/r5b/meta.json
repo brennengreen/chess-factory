@@ -1,0 +1,11 @@
+{
+  "hypothesis": "Errors are mainly candidate-selection and stopping errors (taking the first greedy capture, not comparing against a forcing alternative, stopping before the recapture), so a disciplined comparison and end-of-line counting procedure with the same tools will raise move accuracy and motif naming.",
+  "citations": [
+    "P0245",
+    "P1037",
+    "P0882",
+    "P1052",
+    "P0905",
+    "P0261"
+  ]
+}

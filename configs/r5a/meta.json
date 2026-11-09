@@ -1,0 +1,12 @@
+{
+  "hypothesis": "Errors are mainly perception errors (false 'undefended', missed x-rays, pins and discovered lines), so the fix is to enable square_info and line_view and require that every claimed relation be verified with them before a move is chosen or explained.",
+  "citations": [
+    "P0245",
+    "P1037",
+    "P0882",
+    "P1069",
+    "P0905",
+    "P1052",
+    "P0261"
+  ]
+}

@@ -1,9 +1,10 @@
 """chess-eyes: an MCP server that gives a model eyes on the board, never an engine.
 
 Every tool reports facts about the current position (legality, attacks, defenders).
-None of them searches, scores, or ranks moves.
+None of them searches, scores, or ranks moves, except forcing_lines: an exploratory calculation aid added
+after the preregistered climb, to test whether the climb resumes once the tools reach the bottleneck.
 """
-import os
+import os, time
 import chess
 from mcp.server.fastmcp import FastMCP
 
@@ -211,6 +212,107 @@ def line_view(fen: str, square: str) -> str:
         hit = [_desc(b, t) for t in b.attacks(sq) if b.piece_at(t)]
         out.append("  touches: " + (", ".join(hit) or "no pieces"))
     return "\n".join(out)
+
+
+def _mat(b, color):
+    return sum(VAL[p.piece_type] * (1 if p.color == color else -1) for p in b.piece_map().values())
+
+
+def _forcing(b):
+    return [m for m in b.legal_moves if b.is_capture(m) or m.promotion or b.gives_check(m)]
+
+
+class _Out(Exception):
+    pass
+
+
+def _search(b, me, depth, alpha, beta, deadline, qdepth=4):
+    """Value for `me` (material, mate = 1000). `me` plays only forcing moves and may stop; the opponent
+    considers every legal reply. Leaves are resolved with captures only."""
+    if time.time() > deadline:
+        raise _Out
+    if b.is_checkmate():
+        return (-1000 - depth if b.turn == me else 1000 + depth), []
+    if b.is_stalemate() or b.is_insufficient_material():
+        return 0, []
+    stand = _mat(b, me)
+    if b.turn == me:
+        best, pv = stand, []
+        if best >= beta:
+            return best, pv
+        alpha = max(alpha, best)
+        moves = _forcing(b) if depth > 0 else [m for m in b.legal_moves if b.is_capture(m)][: 12 if qdepth > 0 else 0]
+        moves.sort(key=lambda m: (not b.gives_check(m), not b.is_capture(m)))
+        for m in moves:
+            b.push(m)
+            v, line = _search(b, me, depth - 1 if depth > 0 else 0, alpha, beta, deadline, qdepth - (depth <= 0))
+            b.pop()
+            if v > best:
+                best, pv = v, [m] + line
+            alpha = max(alpha, v)
+            if alpha >= beta:
+                break
+        return best, pv
+    if depth <= 0 and not b.is_check():
+        best, pv = stand, []
+        if best <= alpha or qdepth <= 0:
+            return best, pv
+        moves = [m for m in b.legal_moves if b.is_capture(m)]
+    else:
+        best, pv = 10 ** 6, []
+        moves = list(b.legal_moves)
+    moves.sort(key=lambda m: (not b.is_capture(m), not b.gives_check(m)))
+    for m in moves:
+        b.push(m)
+        v, line = _search(b, me, max(depth - 1, 0), alpha, beta, deadline, qdepth - (depth <= 0))
+        b.pop()
+        if v < best:
+            best, pv = v, [m] + line
+        beta = min(beta, v)
+        if alpha >= beta:
+            break
+    return best, pv
+
+
+def _san_line(b, moves):
+    b = b.copy()
+    out = []
+    for m in moves:
+        out.append(b.san(m))
+        b.push(m)
+    return out
+
+
+@mcp.tool()
+def forcing_lines(fen: str) -> str:
+    """Calculation aid. Searches the side to move's forcing moves (checks, captures, promotions) against
+    every defence, up to five plies, and reports the three best forcing tries with their main line and
+    the material swing or mate. Quiet moves are not searched, so a quiet best move will not appear."""
+    b = _board(fen)
+    me, base = b.turn, _mat(b, b.turn)
+    deadline = time.time() + 12
+    results, done_depth = {}, 0
+    try:
+        for depth in (1, 3, 5):
+            cur = {}
+            for m in sorted(_forcing(b), key=lambda m: (not b.gives_check(m), not b.is_capture(m))):
+                b.push(m)
+                v, line = _search(b, me, depth - 1, -10 ** 6, 10 ** 6, deadline)
+                b.pop()
+                cur[m] = (v, [m] + line)
+            results, done_depth = cur, depth
+    except _Out:
+        pass
+    if not results:
+        return "No forcing moves (checks, captures or promotions) for the side to move. Look for a quiet move."
+    top = sorted(results.items(), key=lambda kv: -kv[1][0])[:3]
+    out = [f"Forcing tries for {SIDE[me]}, searched {done_depth} plies (quiet moves not searched):"]
+    for m, (v, line) in top:
+        res = (f"mates" if v >= 1000 else f"gets mated" if v <= -1000 else
+               f"material {'+' if v - base >= 0 else ''}{v - base} for {SIDE[me]}")
+        out.append(f"- {b.san(m)}: {res}. Line: {' '.join(_san_line(b, line))}")
+    return "\n".join(out)
+
 
 if __name__ == "__main__":
     enabled = set(filter(None, os.environ.get("CHESS_EYES_TOOLS", "").split(",")))

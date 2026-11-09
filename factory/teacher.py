@@ -128,12 +128,14 @@ def leak_check(text, splits=("train", "dev", "test", "test_mirror")):
     return hits
 
 
-def propose(skill, tools, graded, items, subject_dir, round_no):
+def propose(skill, tools, graded, items, subject_dir, round_no, prompt_template=None, catalog=None, log=None):
+    """prompt_template, catalog and log are overridden only by the exploratory interventions."""
+    catalog = catalog or TOOL_CATALOG
     lib = Library()
     passages = retrieve(lib, graded)
-    prompt = PROMPT.format(
+    prompt = (prompt_template or PROMPT).format(
         skill=skill or "(none: the model has no skill yet)", tools=", ".join(tools) or "none",
-        catalog="\n".join(f"- {k}: {v}" for k, v in TOOL_CATALOG.items()), n=len(graded),
+        catalog="\n".join(f"- {k}: {v}" for k, v in catalog.items()), n=len(graded),
         report=report(graded, subject_dir), examples=examples(graded, items, subject_dir),
         passages="\n\n".join(f"[{d['id']}] {d['source']}: {d['text']}" for d in passages))
     home, _ = make_home(ROOT / "runs/homes/_teacher")
@@ -146,7 +148,7 @@ def propose(skill, tools, graded, items, subject_dir, round_no):
             break
         except Exception:
             out = None
-    log = ROOT / f"runs/climb/round{round_no}"
+    log = log or ROOT / f"runs/climb/round{round_no}"
     log.mkdir(parents=True, exist_ok=True)
     (log / "teacher_prompt.txt").write_text(prompt)
     (log / "teacher_reply.json").write_text(json.dumps(out, indent=2))

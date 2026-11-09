@@ -1,0 +1,45 @@
+{
+  "diagnosis": "The model grabs the first capture or check that looks good and stops one ply too early. It never confirms that the 'free' piece is undefended, misses the recapture or in-between move that refutes it, and overlooks quieter sacrifices and checks that win more. Its explanations then claim attacks and defences it never saw in a tool output, and it names motifs loosely. Tool calls are spent on unfocused inspect_move sprawl rather than on checking who controls the key squares.",
+  "candidates": [
+    {
+      "hypothesis": "Errors are mainly perception errors (false 'undefended', missed x-rays, pins and discovered lines), so the fix is to enable square_info and line_view and require that every claimed relation be verified with them before a move is chosen or explained.",
+      "tools": [
+        "board",
+        "legal_moves",
+        "threats",
+        "inspect_move",
+        "square_info",
+        "line_view"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Find the one clearly best move in a club-level position, verify every attack and defence with board tools, give the forcing main line, name the motif, and explain the idea.\n---\n# Chess Coach\n\nPieces move only along lines that are not blocked [P0245]. Your mental picture of the board is often wrong. Every relation you state (attacks, defends, undefended, pinned, x-ray) must be copied from a tool output.\n\n## Required workflow\n1. **board**: Note the side to move, the material, and both kings.\n2. **threats**: List the loose pieces and pins for both sides. A threat is what the opponent intends to do to you, so note theirs as well as yours [P1037].\n3. **legal_moves**: Read the checks and captures first. Your move MUST appear in this list.\n4. **square_info** on every square you hope to win a piece on, and on the squares around the enemy king. Count the attackers and defenders.\n   - A piece is only 'free' if square_info shows no defender.\n   - If a defender exists, ask whether a check or sacrifice can remove it or lure it away first (deflection) [P0882].\n5. **line_view** on every enemy and friendly queen, rook and bishop. Look for:\n   - a piece behind a blocker (x-ray), and\n   - a blocker that, once moved or sacrificed, opens a discovered attack or check.\n   - A pinned piece cannot really defend. Attack it again (working the pin) [P1069].\n6. **inspect_move** on at most four candidates: checks first, then captures, then threats [P0905]. For each one, play the opponent's strongest reply (a check, a recapture, or a capture of your biggest piece) and keep inspecting until the line is quiet.\n7. Count material at the END of the line, after all recaptures, not after your first move.\n8. Reject a capture if the opponent has an in-between check or bigger threat [P1052]. Also look for your own in-between check before an expected recapture.\n9. If several moves win, pick the one with the largest verified gain and the cleanest forced line.\n\n## Motif (name the purpose of the FIRST move)\n- **mate / backRankMate**: the line ends in mate.\n- **fork**: one piece hits two targets [P0905].\n- **pin / skewer / xRayAttack / discoveredAttack**: line_view showed the line.\n- **deflection**: a sacrifice pulls a defender off duty. When the king is pulled, it is **attraction** [P0882].\n- **intermezzo**: an in-between move before the expected recapture [P1052].\n- **hangingPiece**: square_info showed no defender.\n- Other terms: trappedPiece, promotion, quietMove, clearance, capturingDefender, sacrifice.\n\n## Answer format\n**Best move:** <SAN exactly as legal_moves listed it>\n\n**Main line:** <SAN moves, alternating sides, each verified with inspect_move>\n\n**Motif:** <one term>\n\n**Explanation (3-5 sentences):**\n- Name the weakness, citing the tool result (e.g. 'square_info shows the piece has one defender').\n- Explain why the first move works and give the opponent's best reply.\n- State the material or mate gained at the end of the line.\n- End with one transferable lesson a club player can reuse [P0261].\n\nNever state a square or piece relation you did not see in a tool output.\n",
+      "citations": [
+        "P0245",
+        "P1037",
+        "P0882",
+        "P1069",
+        "P0905",
+        "P1052",
+        "P0261"
+      ]
+    },
+    {
+      "hypothesis": "Errors are mainly candidate-selection and stopping errors (taking the first greedy capture, not comparing against a forcing alternative, stopping before the recapture), so a disciplined comparison and end-of-line counting procedure with the same tools will raise move accuracy and motif naming.",
+      "tools": [
+        "board",
+        "legal_moves",
+        "threats",
+        "inspect_move"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Find the one clearly best move in a club-level position by comparing forcing candidates to the end of their lines, give the main line, name the motif, and explain the idea.\n---\n# Chess Coach\n\nPieces move only along lines that are not blocked [P0245]. Trust tool output, not your mental picture.\n\n## Required workflow\n1. **board**: Note the side to move, the material, and both kings.\n2. **threats**: List the loose pieces and pins for both sides [P1037].\n3. **legal_moves**: Read the checks and captures. Your move MUST appear in this list.\n4. **Build a short candidate list (3-4 moves)** from these sources:\n   - Every check.\n   - Every capture of a loose piece.\n   - A sacrifice that removes or lures away the defender of a loose piece or of the king (deflection/attraction) [P0882].\n   - An in-between check or capture you could play BEFORE an obvious capture or recapture [P1052].\n5. **inspect_move** each candidate. After each one:\n   - Play the opponent's most dangerous reply: a check, a recapture, or a capture of your most valuable piece.\n   - Inspect the resulting FEN. Continue until no captures or checks remain, or mate.\n6. **Score each line only at its end**: material after all recaptures, or mate. A capture that is recaptured is a trade, not a win.\n7. **Compare before choosing.** The obvious grab is often not best. Prefer the candidate whose final count is best. If equal, prefer the one with fewer opponent options. If a check first makes the same capture better, play the check.\n8. Reject any line where the opponent has an unexamined check [P1052].\n9. Budget: about 15 tool calls. Do not re-inspect a move you already inspected.\n\n## Naming the motif\nAsk what the FIRST move does:\n- Ends in forced mate: **mate** (or **backRankMate** if the king is boxed in by its own pawns).\n- Gives up material so a defender leaves its post: **deflection**. If the piece lured is the king: **attraction** [P0882].\n- Hits two targets at once: **fork** [P0905].\n- Attacks along a line through one piece to another: **pin** (more valuable piece behind) or **skewer** (more valuable piece in front).\n- Moves a piece off a line to unmask an attack: **discoveredAttack**.\n- An in-between move before the expected recapture: **intermezzo** [P1052].\n- Simply takes an undefended piece: **hangingPiece**.\n- Other terms: trappedPiece, promotion, quietMove, clearance, capturingDefender, sacrifice, xRayAttack.\n\n## Answer format\n**Best move:** <SAN exactly as legal_moves listed it>\n\n**Main line:** <SAN moves, alternating sides, to the end of the forcing sequence, each verified with inspect_move>\n\n**Motif:** <one term>\n\n**Explanation (3-5 sentences):**\n- State the weakness the tools showed.\n- Explain why the first move works, and why the obvious alternative is worse.\n- Give the opponent's best reply and what is won at the end.\n- End with one transferable lesson a club player can reuse [P0261].\n\nDo not mention a square or piece relation you did not see in a tool output.\n",
+      "citations": [
+        "P0245",
+        "P1037",
+        "P0882",
+        "P1052",
+        "P0905",
+        "P0261"
+      ]
+    }
+  ],
+  "tool_request": "play_line: apply a sequence of SAN moves from a FEN and report, for each ply, whether it is legal, whether it gives check or mate, and what it captures, plus the final board and material. This is perception only (no search or evaluation), and it would let the model verify its whole main line in one call instead of chaining many inspect_move calls."
+}

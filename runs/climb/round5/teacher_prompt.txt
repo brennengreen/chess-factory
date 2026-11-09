@@ -1,0 +1,122 @@
+You are the teacher in a teacher/grader pair. A small model coaches club chess players: given a position it must find the one clearly best move, give the main line, name the motif, and explain the idea. A grader scores it (move 40, line 15, motif 15, explanation 30). Your job is to propose revisions to the model's SKILL.md and its tool set that will raise the score on positions you will never see.
+
+RULES (a revision that breaks one is rejected unseen)
+1. Teach transferable method, the way a human coach would. Never mention a specific position, FEN, square sequence or move from the examples below. They come from a training split; the evaluation positions are different.
+2. Ground each principle in the human sources below and cite passage IDs like [P0123]. Do not invent chess theory.
+3. Tools: you may only enable or disable tools from the catalog. Tools show the board; none of them search or evaluate, and none may be added that do. If a missing perception tool would clearly help, describe it under tool_request; a human decides whether to build it.
+4. SKILL.md must start with YAML front matter (name: chess-coach, description: ...) and stay under 600 words.
+5. Propose exactly two candidates that test different hypotheses about what is holding the score back.
+
+CURRENT SKILL.md
+<<<
+---
+name: chess-coach
+description: Find the one clearly best move in a club-level position, verify it with board tools, give the forcing main line, name the motif, and explain the idea.
+---
+# Chess Coach
+
+Never trust your mental picture of the board. Pieces move only along lines that are not blocked [P0245], and most wrong answers come from imagined checks through blocking pieces. Every claim you make must come from a tool result.
+
+## Required workflow
+1. **board**: Note the side to move, the material, and where each king is.
+2. **threats**: List the loose pieces and pins for both sides. A loose enemy piece or an exposed king is usually where the solution lives.
+3. **legal_moves**: Read the checks and captures first. Your move MUST appear in this list, and only listed checks are checks.
+4. **inspect_move** on each serious candidate, checks first, then captures, then threats [P0905]. Read the opponent's replies.
+   - If a reply wins back material or gives check, follow it with inspect_move on the resulting FEN.
+   - Keep going until the line ends in mate, a clear material gain, or a won endgame.
+5. Reject any candidate where the opponent has an in-between check or a bigger threat in reply (zwischenzug) [P1052].
+6. Prefer the most forcing candidate that still wins. If several moves win, choose the one with the cleanest forced line.
+
+## Motif vocabulary (pick the one that describes the key move)
+- **fork / double attack**: one piece hits two targets, strongest with check [P0905].
+- **deflection / decoy**: lure a defender off its duty [P0882].
+- **attraction**: drag the king onto a bad square, often by sacrifice [P0882].
+- **intermezzo**: an in-between move or check before the expected recapture [P1052].
+- **backRankMate**: a king trapped by its own pawns on the back rank [P0844].
+- **mate, pin, skewer, discoveredAttack, hangingPiece, trappedPiece, promotion, quietMove, clearance, capturingDefender, sacrifice**.
+
+## Answer format
+**Best move:** <SAN, copied exactly as legal_moves listed it>
+
+**Main line:** <the moves in SAN, alternating sides, each one checked with inspect_move>
+
+**Motif:** <one term>
+
+**Explanation (3-5 sentences):**
+- State the threat or weakness the tools showed [P1037].
+- Explain why the forcing move works and what the opponent's best reply is.
+- Say what is won.
+- End with one transferable lesson a club player can reuse [P0261].
+
+Do not mention a square or piece relation you did not see in a tool output.
+
+>>>
+Tools currently enabled: board, legal_moves, threats, inspect_move
+
+TOOL CATALOG
+- board: Draw the position: diagram, piece list for each side, side to move, check status, material.
+- legal_moves: List every legal move for the side to move, grouped into checks, captures and quiet moves.
+- threats: Report loose pieces (attacked and undefended, or attacked by a cheaper piece) and pins, for both sides.
+- inspect_move: Play one move and describe the result: check or mate, what the moved piece attacks, newly loose pieces, the opponent's checks and captures in reply, and the resulting FEN to keep exploring.
+- square_info: Who controls one square: the piece on it, every attacker and defender of each side, and x-ray attackers lined up behind exactly one blocking piece. (Built after the round 1 tool_request.)
+- line_view: What one piece sees: for a rook, bishop or queen, the first piece along each line and the piece behind it (pins, x-rays, discovered attacks); for a knight, king or pawn, the pieces it touches. (Built after the round 2 tool_request.)
+
+GRADER REPORT ON 60 TRAINING POSITIONS
+Mean score 36.1/100. Correct move 32/60. Answer unparseable 1. Line legal 51/60. Motif named correctly 19/60. Mean tool calls 17.8.
+Judge means (0-2): accurate 0.15, why 0.33, teach 0.77
+Right move but inaccurate explanation: 23.
+Correct move by tagged motif: fork 9/16, mate 7/11, discoveredAttack 6/9, pin 2/7, promotion 2/5, sacrifice 3/5, deflection 2/5, hangingPiece 2/4, attraction 3/4, intermezzo 2/3, trappedPiece 0/2, xRayAttack 0/1, skewer 1/1, zugzwang 1/1, doubleCheck 1/1
+Correct move by human puzzle rating: 900-1199: 5/7, 1200-1499: 8/17, 1500-1799: 12/18, 1800-2099: 6/15, 2100-2399: 1/3
+Tool calls in total: chess-eyes-inspect_move 708, chess-eyes-legal_moves 162, chess-eyes-board 72, chess-eyes-threats 63, skill 60
+
+FAILED TRAINING EXAMPLES (for diagnosis only, never quote them)
+- FEN r5k1/2qn1pbp/1pp3p1/3N3r/1P1B4/P3P1P1/2Q2P1P/R4RK1 b - - 0 21 (Black to move, human puzzle rating 1490, themes advantage, hangingPiece, middlegame, short)
+  Model played Qxg3+; solution Rxd5 Bxg7 Kxg7. Tools used: skill, board, threats, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move.
+  Judge: The note recommends Qxg3+ instead of the clearly winning Rxd5 and gives a false forced-mate line and misleading motif.
+  Model's note: "Perfect! The winning move is **Qxg3+**, which forces Kh1 (the only move to avoid immediate mate), and then Rxh2# is checkmate.\n\n**Best move:** Qxg3+\n\n**Main line:** Qxg3+ Kh1 Rxh2# (mate in 2)\n\n**Motif:** fork (the check forces the king away, enabling the back rank mate)\n\n**Coaching note (80 words max):**\n\nWhen your opponent's king lacks an escape square and their pieces are bunched together, look"
+- FEN 7k/p2q3p/1p6/8/3p2QP/4r3/PPP2r2/R5RK b - - 5 27 (Black to move, human puzzle rating 1386, themes endgame, mate, mateIn2, short, xRayAttack)
+  Model played Rh2+; solution Rh3+ Qxh3 Qxh3#. Tools used: skill, board, threats, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move.
+  Judge: The note recommends Rh2+ instead of the only clearly winning Rh3+ line and builds its explanation on an incorrect continuation and misleading tactical themes.
+  Model's note: "Black is up a queen for a rook (net +4 material) and has a winning position. This is the key winning line!\n\n**Summary of the main line:**\n1. **Rh2+** (forcing check, sacrifices the rook to expose White's king)\n2. **Kxh2** (forced, only legal move)\n3. **Re2+** (check, attacking the king and c2 pawn)\n4. **Kh3** (White's best try, but still loses)\n5. **Qxg4+** (wins the queen!)\n6. **Kxg4 Re4+** and B"
+- FEN r1b1kb1r/pp4pp/2pp1n2/3Pn3/3Qp3/1BN1N3/PPP2PqP/R1B1K2R w KQkq - 0 12 (White to move, human puzzle rating 1994, themes advantage, intermezzo, opening, short)
+  Model played Nxg2; solution Qxe5+ dxe5 Nxg2. Tools used: skill, board, threats, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move.
+  Judge: The note recommends the wrong move and falsely treats the queen as safely capturable, missing the winning intermezzo Qxe5+ before Nxg2.
+  Model's note: "After Qxe5+, Black plays dxe5 and White loses the queen. That's worse. Nxg2 is clearly superior because it wins the undefended queen cleanly.\n\n---\n\n**Best move:** Nxg2\n\n**Main line:** Nxg2 Nf3+ Ke2 Nxd4+ Kxd4 Nxd5\n\n**Motif:** hangingPiece (Black's queen is undefended)\n\n**Coaching Note (for club player):**\nYour opponent's queen on g2 was undefended. When your opponent moves a piece to an undefended"
+- FEN 3r4/1p3k2/p4bpp/3bRp2/P7/2P5/1PB3PP/5NK1 w - - 1 30 (White to move, human puzzle rating 1299, themes advantage, attraction, endgame, long, pin, sacrifice)
+  Model played Re7+; solution Rxd5 Rxd5 Bb3 Ke7 Bxd5. Tools used: skill, board, threats, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move.
+  Judge: Re7+ is not the winning move, the rook on d8 is defended by the bishop on f6, and the proposed sequence does not win material as claimed.
+  Model's note: 'Perfect. Re7+ is a check, forking the king and b7 pawn. Black must move the king. Let me trace the main line:\n\n**Re7+ Kg8 Re8+ Kg7 Rxd8 Bxd8**\n\nThis is the critical line, leading to a favorable endgame for White where B+N faces 2B, with White having better pawn structure and the more actively placed pieces.\n\n**Coaching note (under 80 words):**\n\nYou missed a forcing check sequence! When your oppone'
+- FEN 2r4k/5ppb/Q2q3p/P6P/1N2P1P1/3p1P2/3R2K1/8 b - - 5 41 (Black to move, human puzzle rating 1781, themes advantage, endgame, pin, short)
+  Model played Qxb4; solution Qxa6 Nxa6 Rc2. Tools used: skill, board, threats, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move.
+  Judge: Qxb4 is not the winning move, and the claimed fork is false because it does not attack White's queen on a6.
+  Model's note: "Perfect! After the forcing sequence **Qxb4 Qxc8+ Bg8 Qxg8+ Kxg8**, Black has traded pieces and won the knight. The material count now shows Black is ahead (+9 for Black in the last move means significant compensation). Black's queen on b4 still attacks White's rook on d2 and pawn on a5. Black has achieved a winning advantage through the fork.\n\n**Best move:** Qxb4\n\n**Main line:** Qxb4 Qxc8+ Bg8 Qxg"
+- FEN 8/1b2Q3/p4npk/3p3p/3P3P/3B1P2/7K/3q4 w - - 3 37 (White to move, human puzzle rating 1895, themes crushing, endgame, fork, long)
+  Model played Qxf6; solution Qf8+ Kh7 Qf7+ Kh8 Qxf6+. Tools used: skill, board, threats, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, legal_moves, inspect_move, inspect_move, inspect_move, legal_moves, inspect_move, inspect_move, inspect_move, legal_moves, legal_moves, inspect_move, inspect_move, legal_moves, inspect_move, legal_moves, inspect_move, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, legal_moves, inspect_move, inspect_move, legal_moves, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, inspect_move, legal_moves, inspect_move, inspect_move, legal_moves, inspect_move, legal_moves, inspect_move, inspect_move, legal_moves, legal_moves, inspect_move, inspect_move, inspect_move, legal_moves, legal_moves, inspect_move, inspect_move.
+  Judge: The note recommends Qxf6, which is not the winning move, overlooks the forcing Qf8+ continuation, and falsely treats the knight as a decisive undefended gain.
+  Model's note: "Perfect! Qxf6 wins the knight (+3 material gain). Now let me verify the best main line. After Qxf6, Black's responses are checks or captures. Let me follow one line:\n\nQxf6 Qe2+ (check) ... White moves the king, say Kh3. Then Black might play Qc2+ (continuing to give checks) or another move. But White is up a knight.\n\nLet me check: after Qxf6 Qe2+ Kh3, what can Black do?\n\nBlack can give more checks"
+
+HUMAN SOURCES (retrieved for these failures)
+[P1037] Wikipedia, "Glossary of chess" (CC BY-SA 4.0): by the organizers, for example the Budapest Gambit (1.d4 Nf6 2.c4 e5). theoretical novelty ("TN" or "N") Or simply novelty. A move in the opening that has not been played before. threat A plan or move that carries an intention to damage the opponent's position. A threat is a tactical weapon that must be defended against. threefold repetition A draw may be claimed if the same position occurs three times with the same player to move and with each player having the choice of the same set of moves each time, including the right to capture en passant and the right to castle. For the same position occurring five times, see fivefold repetition. tiebreaks See Tie-breaking in Swiss-system tournaments. This refers to a number of different systems that are used to break ties, and thus designate a single winner, where multiple players or teams tie for the same place in a Swiss system chess tournament. time 1. The amount of time each player has to think and calculate as measured
+
+[P1052] Wikipedia, "Glossary of chess" (CC BY-SA 4.0): zwischenschach [from German, 'in-between check'] Playing a surprising check that the opponent did not consider when plotting a sequence of moves; a zwischenzug that is a check. zwischenzug [from German, 'in-between move'] An "in-between" move, or an intermezzo, played before an expected reply. Often, but not always, this involves responding to a threat by posing an even greater threat, forcing the opponent to respond to the threat first. == Further reading == Evans, Larry (2011). 10 Most Common Chess Mistakes. Cardoza. ISBN 978-1580422895. Levitt, Gerald M. (2006). Turk, Chess Automation. McFarland & Company. ISBN 978-0786429035. Nimzowitsch, Aron (1980). Blockade. Chess Enterprises. ISBN 9781476739700. Soltis, Andy (2019). "Out on a limb; What level of certainty do you need to confidently play a move?". Chess Life. United States Chess Federation. Standage, Tom (2004). Mechanical Turk: The True Story of the Chess Playing Machine That Fooled the World. Penguin USA. ISBN 978-0140299199. van de Oudeweetering, Arthur (2016). Train Your Chess Pattern Recognition: More Key Moves & Motives in the Middlegame. New In Chess.
+
+[P0905] Wikipedia, "Fork (chess)" (CC BY-SA 4.0): In chess, a fork is a tactic in which a piece attacks multiple enemy pieces simultaneously. The attacker usually aims to capture one of the forked pieces. The defender often cannot counter every threat. A fork is most effective when it is forcing, such as when the king is put in check. A fork is a type of double attack. == Terminology == A fork is an example of a double attack. The type of fork is named after the type of forking piece. For example, a fork by a knight is a knight fork. The attacked pieces are forked. If the king is one of the attacked pieces, the term absolute fork is sometimes used, while a fork not involving the enemy king is a relative fork. A fork of the king and queen, the highest material-gaining fork possible, is sometimes called a royal fork. A fork of the enemy king, queen, and one (or both) rooks is sometimes called a grand fork. A knight fork of the enemy
+
+[P0245] E. Lasker, Chess Strategy (1915): namely, the capture of the opposing King. Before I can explain what is meant by the capture of the King, I must set out the rules of the game in full. Diagram 1 shows the position the forces take up for the contest. The board is so placed that there is a white square at the top left-hand corner. The Rooks take up their positions at the corner squares, and next to them the Knights. Next to those again are the Bishops, and in the centre the King and Queen, the White Queen on a White square, and the Black Queen on a Black square. The eight pawns occupy the ranks immediately in front of the pieces. From this initial position, White begins the game in which the players must move alternately. The pieces move in the following way: The Rook can move from any square it happens to be on, to any other square which it can reach in a straight line, either perpendicularly or horizontally, unless there is
+
+[P0244] E. Lasker, Chess Strategy (1915): chess the only method of teaching which has proved productive in all branches of science and art, that is, the education of individual thought. If I have succeeded in this, I shall have the satisfaction of having contributed a little to the furthering, in the wide circles in which it is played, of the game which undoubtedly makes the strongest appeal to the intellect. A GAME of chess is played by two opponents on a square board consisting of sixty-four White and Black squares arranged alternately. The forces on each side comprise sixteen units, namely a King, a Queen, two Rooks, two Bishops, two Knights, and eight Pawns. All units move according to different laws, and the difference in their mobility is the criterion of their relative value and of the fighting power they contribute towards achieving the ultimate aim, namely, the capture of the opposing King. Before I can explain what is meant by the capture of the King, I must set out the rules of the game in
+
+[P0824] E. Lasker, Chess and Checkers: The Way to Mastership (1918): on c4 who is weak on account of his advanced position. Black can attack him with the King and White's King is consequently compelled to stay on the Queen's wing guarding the Pawn, while Black is at leisure to secure a passed Pawn on the King's wing. These maneuvers are, of course, possible only with the Rooks off the board. That is why Black tries to force their exchange and why White should endeavor to prevent it. In view of the hopeless Pawn ending it would have been best to give up a Pawn by (27) R-d1, P-b6; (28) Kt-c4, Bxc4; (29) Pxc4, Rxc4; (30) R-d2 in order to keep a Rook on the board, thus obtaining a drawing chance. Black needs now only six moves to queen the Pawn b5 while White in the meantime cannot do more than capture the g- and h-Pawns, and Black's Queen can naturally stop the White passed Pawns without difficulty. The game proceeded as follows: Black could just as well have captured the
+
+[P0882] Wikipedia, "Decoy (chess)" (CC BY-SA 4.0): In chess, a decoy is a tactic that lures an enemy man off its square and away from its defensive role. Typically this means away from a square on which it defends another piece or threat. The tactic is also called a deflection. Usually the piece is decoyed to a particular square via the sacrifice of a piece on that square. A piece so sacrificed is called a decoy. When the piece decoyed or deflected is the king, the tactic is known as attraction. In general in the middlegame, the sacrifice of a decoy piece is called a diversionary sacrifice. The game Honfi–Barczay, Kecskemet 1977, with Black to play, illustrates two separate decoys. First, the white queen is set up on c4 for a knight fork: 1... Rxc4! 2. Qxc4 Next, the fork is executed by removing the sole defender of the a3-square: 2... Qxb2!+ 3. Rxb2 Na3+ 4. Kc1 Finally, a zwischenzug decoys (attracts) the king to b2: 4... Bxb2+ After either 5.Kxb2 Nxc4+ 6.Kc3 Rxe4, or 5.Kd1 Nxc4,
+
+[P0261] E. Lasker, Chess Strategy (1915): in his development. His combinations will become more and more sound, he will learn to value his forces more correctly, and therefore to husband his pieces and even his pawns with greater care. In this second stage his strength will increase steadily, but, and this is the drawback, only as far as his power of combination is concerned. Unless a player be exceptionally gifted, he will only learn after years of practice, if at all, what may be termed “positional play.” For that, it is necessary to know how to open a game so as to lay the foundation for a favourable middle game, and how to treat a middle game, without losing sight of the possibilities of the end-game. It is hopeless to try to memorise the various openings which analysis have proved correct, for this empirical method fails as soon as the opponent swerves from the recognised lines of play. One must learn to recognise the characteristics of sound play. They apply to all and any position, and
+
+[P1069] Wikipedia, "Pin (chess)" (CC BY-SA 4.0): 2...Rxh1). It can be said that the white knight is "pinned to the b1-square" rather than pinned to a piece. === Cross-pin === A cross-pin consists of two or more pins, of any type, on the same piece. As there is only one king per side, only one of the pins can be absolute, but there are otherwise no restrictions on the types of pins involved. == Pin combinations == Pinning can also be used in combination with other tactics. For example, a piece can be pinned to prevent it from moving to attack, or a defending piece can be pinned as part of tactic undermining an opponent's defense. Another tactic which takes advantage of a pin can be called working the pin. In this tactic, other pieces from the pinning piece's side attack the opposing pinned piece. Since the pinned piece cannot move out of the line of attack, the player whose piece is pinned may move other pieces to defend the pinned piece, but the pinning player may
+
+[P0082] Capablanca, Chess Fundamentals (1921): 3, because of the sacrifice B x P), seriously weakening his King's side. White has no longer an attack, but he has compelled Black to create a marked weakness. Now White's whole plan will be to exploit this weakness (the weak K P), and the student can now see how the principles expounded previously are applied in this game. Every move is directed to make the weak King's Pawn untenable, or to profit by the inactivity of the Black pieces defending the Pawn, in order to improve the position of White at other points. {86} At last the Bishop comes out, not as an active attacking piece, but merely to make way for the Rook. A very clever move, tending to prevent P - B 5, and tempting White to play Kt x B, followed by B x P, which would be bad, as the following variation shows: 19 Kt x B, Q x Kt; 20 B x P, Kt - Kt 4; 21 Q - Kt 4, R x
+
+Reply with only JSON:
+{"diagnosis": "<what is going wrong, 2-3 sentences>",
+ "candidates": [{"hypothesis": "<one sentence>", "tools": ["..."], "skill_md": "<full SKILL.md>", "citations": ["P...."]}, {...}],
+ "tool_request": "<optional: a perception tool you wish existed, or empty>"}

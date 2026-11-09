@@ -33,3 +33,26 @@ tool rules exclude. The underlying facts are already available (legal_moves for 
 for attackers and defenders of any square). Evidence also argued against more perception tools: in rounds
 2 and 3, candidates given square_info and line_view did not beat the incumbent (paired diffs -1.9 and
 -1.6 points, both CIs spanning zero).
+
+## Round 4 tool_request: compare_moves (declined)
+> "A 'compare_moves' perception tool: given several candidate moves, show for each one, side by side, what
+> inspect_move reports..."
+
+Declined. It is inspect_move called several times; it saves calls but adds no facts, and candidates with
+more tool calls per position had been doing worse, not better.
+
+## Round 5 tool_request: play_line (not built)
+> "play_line: apply a sequence of SAN moves from a FEN and report, for each ply, whether it is legal,
+> whether it gives check or mate, and what it captures..."
+
+Not built. Round 5 was the last preregistered round, so no candidate could have used it.
+
+## After the climb: exploratory interventions (not preregistered)
+The climb stalled after round 1. Probes on dev (`factory/probe.py`, `factory/explore.py`) located the
+bottleneck in calculation rather than perception: told the correct first move, r1a gains +21.7 points, yet
+its lines stay half wrong. To test which factor binds, two interventions reuse round 5's exact teacher input
+(r1a's failures on train_r5) and change one thing each (`factory/intervene.py`):
+- minimal: the operator. Each candidate is one small edit of r1a instead of a full rewrite.
+- calc: the surface. The catalog adds `forcing_lines`, a calculation aid that searches checks, captures and
+  promotions five plies deep. This deliberately breaks the "eyes, never an engine" rule, to measure what
+  that rule costs. Nothing from these interventions goes to the sealed test.

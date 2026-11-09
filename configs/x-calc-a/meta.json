@@ -1,0 +1,12 @@
+{
+  "hypothesis": "The bottleneck is calculation depth: letting the model use forcing_lines to search checks and captures against every defence will find decoys, intermezzos and mating sacrifices it currently misses, and give it a verified line to explain.",
+  "citations": [
+    "P0245",
+    "P1037",
+    "P0882",
+    "P1052",
+    "P1069",
+    "P0905",
+    "P0261"
+  ]
+}

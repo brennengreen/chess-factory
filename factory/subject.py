@@ -38,7 +38,8 @@ def load_config(name):
     return skill, tools
 
 
-def run_split(config, split, run_tag=None, workers=8, limit=None):
+def run_split(config, split, run_tag=None, workers=8, limit=None, model=None, oracle_move=False):
+    """model and oracle_move exist only for exploratory probes; the climb and final analysis use the defaults."""
     skill, tools = load_config(config)
     home, allowed = make_home(ROOT / "runs/homes" / config, skill, tools)
     tag = run_tag or config
@@ -48,7 +49,10 @@ def run_split(config, split, run_tag=None, workers=8, limit=None):
     todo = [it for it in items if not (outdir / f"{it['id']}.json").exists()]
 
     def one(it):
-        rec = run(prompt_for(it, skill), home, allowed, SUBJECT_MODEL)
+        p = prompt_for(it, skill)
+        if oracle_move:
+            p += f"\n\n(Hint from a stronger coach: the best first move is {it['solution_san'][0]}.)"
+        rec = run(p, home, allowed, model or SUBJECT_MODEL)
         rec["id"] = it["id"]
         if (rec["final"] or rec["exit"] == 0) and not rec["violations"]:
             (outdir / f"{it['id']}.json").write_text(json.dumps(rec))

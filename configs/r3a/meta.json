@@ -1,0 +1,14 @@
+{
+  "hypothesis": "The score is held back by candidate generation: adding a mobility/trapped-piece scan and a discovered-attack scan (via line_view and square_info) will surface the quiet and discovery moves the model never considers.",
+  "citations": [
+    "P0245",
+    "P1037",
+    "P0244",
+    "P0905",
+    "P1052",
+    "P0082",
+    "P0882",
+    "P0844",
+    "P0261"
+  ]
+}

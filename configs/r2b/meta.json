@@ -1,0 +1,14 @@
+{
+  "hypothesis": "The main leak is candidate generation. A checks-first search misses quiet winning moves (discovered attacks, hits on pinned or overloaded defenders, pawn breaks). Generating candidates from targets and from double threats, with a tight search budget, will find more right moves and give more accurate motifs.",
+  "citations": [
+    "P0245",
+    "P0885",
+    "P0945",
+    "P1037",
+    "P0905",
+    "P0882",
+    "P0824",
+    "P1052",
+    "P0261"
+  ]
+}

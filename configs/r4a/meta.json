@@ -1,0 +1,12 @@
+{
+  "hypothesis": "The model cannot see lines, pins and defenders. Adding line_view and square_info, and teaching it to work pins and to attack overworked defenders, will fix the pin, quietMove and discoveredAttack failures.",
+  "citations": [
+    "P0245",
+    "P0905",
+    "P1069",
+    "P1052",
+    "P0844",
+    "P1037",
+    "P0261"
+  ]
+}
