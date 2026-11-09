@@ -23,3 +23,13 @@ by name per session).
   already one call away: inspect_move returns the resulting FEN, and square_info on the destination square
   lists every attacker and defender, kings included.
 - line_view: built as a new tool (perception only), in the catalog from round 3 on.
+
+## Round 3 tool_request: piece_mobility (declined)
+> "piece_mobility: for one piece, list every square it can legally move to and mark each as safe or unsafe
+> (attacked by a cheaper enemy piece, or attacked more times than defended)."
+
+Declined. Marking a square "safe" or "unsafe" is a static exchange judgment, i.e. evaluation, which the
+tool rules exclude. The underlying facts are already available (legal_moves for destinations, square_info
+for attackers and defenders of any square). Evidence also argued against more perception tools: in rounds
+2 and 3, candidates given square_info and line_view did not beat the incumbent (paired diffs -1.9 and
+-1.6 points, both CIs spanning zero).
