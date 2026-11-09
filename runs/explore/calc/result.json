@@ -1,0 +1,43 @@
+[
+  {
+    "name": "x-calc-a",
+    "hypothesis": "The bottleneck is calculation depth: letting the model use forcing_lines to search checks and captures against every defence will find decoys, intermezzos and mating sacrifices it currently misses, and give it a verified line to explain.",
+    "tools": [
+      "board",
+      "threats",
+      "legal_moves",
+      "inspect_move",
+      "forcing_lines"
+    ],
+    "dev": {
+      "diff": 16.958333333333332,
+      "lo": 10.783333333333333,
+      "hi": 23.208333333333332,
+      "lo_one_sided": 11.749583333333334,
+      "p_wilcoxon": 7.239846074278449e-06,
+      "n": 120,
+      "sd_diff": 34.86429775146893
+    }
+  },
+  {
+    "name": "x-calc-b",
+    "hypothesis": "The bottleneck is perception and verification discipline: before trusting a capture or check, the model must audit defenders and replies with square_info and line_view. It also needs a breadth-first candidate list that includes sacrifices and in-between checks, under a call budget.",
+    "tools": [
+      "board",
+      "threats",
+      "legal_moves",
+      "inspect_move",
+      "square_info",
+      "line_view"
+    ],
+    "dev": {
+      "diff": 0.09166666666666666,
+      "lo": -4.591666666666667,
+      "hi": 4.808541666666664,
+      "lo_one_sided": -3.8583333333333334,
+      "p_wilcoxon": 0.6940306482643828,
+      "n": 120,
+      "sd_diff": 26.72329290625505
+    }
+  }
+]

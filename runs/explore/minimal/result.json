@@ -1,0 +1,40 @@
+[
+  {
+    "name": "x-minimal-a",
+    "hypothesis": "Judging each candidate by the material balance at the end of its verified line, rather than by the first capture or check, will steer the model toward decoy sacrifices and intermezzo captures and away from empty checks and bare material grabs.",
+    "tools": [
+      "board",
+      "legal_moves",
+      "threats",
+      "inspect_move"
+    ],
+    "dev": {
+      "diff": 0.19166666666666668,
+      "lo": -5.566875,
+      "hi": 6.017083333333328,
+      "lo_one_sided": -4.691666666666666,
+      "p_wilcoxon": 0.7645425304253021,
+      "n": 120,
+      "sd_diff": 32.62578653118897
+    }
+  },
+  {
+    "name": "x-minimal-b",
+    "hypothesis": "Requiring the main line and explanation to be copied only from the actual inspect_move chain will cut false continuations and invented piece relations, which should raise line legality and the accuracy and 'why' judge scores.",
+    "tools": [
+      "board",
+      "legal_moves",
+      "threats",
+      "inspect_move"
+    ],
+    "dev": {
+      "diff": -2.7083333333333335,
+      "lo": -7.625,
+      "hi": 2.133749999999994,
+      "lo_one_sided": -6.833333333333333,
+      "p_wilcoxon": 0.3961659025070393,
+      "n": 120,
+      "sd_diff": 27.373972743346943
+    }
+  }
+]

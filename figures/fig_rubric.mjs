@@ -19,10 +19,10 @@ s.text('(the real idea: trade queens, win the race)', 46, 350, { size: 14, color
 
 const X = 318;
 s.text('the model answered...', X, 34, { size: 16, color: INK.dim });
-s.rect(X, 46, 296, 112, { stroke: INK.faint, width: 1.2, roughness: 1.6 });
-s.lines(['"Qxe5+ wins Black\'s queen. It\'s', 'undefended and you have a check,', 'so check first, material second."', 'motifs: fork, hangingPiece'], X + 12, 74, { size: 15.5, color: INK.chalk, lineHeight: 23 });
+s.rect(X, 46, 296, 134, { stroke: INK.faint, width: 1.2, roughness: 1.6 });
+s.lines(['"Black\'s queen on e5 is undefended', 'and under attack. By capturing it', 'with check, White wins the queen', 'immediately..."', 'motif: hangingPiece'], X + 12, 72, { size: 15.5, color: INK.chalk, lineHeight: 23 });
 
-let y = 192;
+let y = 212;
 const row = (label, pts, ok, note) => {
   ok ? tick(X + 2, y - 6) : cross(X + 4, y - 4);
   s.text(label, X + 28, y, { size: 17, color: INK.chalk });
@@ -32,10 +32,10 @@ const row = (label, pts, ok, note) => {
 };
 row('move  Qxe5+', '40 / 40', true);
 row('line  Qxe5+ Kxe5 d7', '15 / 15', true);
-row('motif', '0 / 15', false, 'it is a promotion race, not a fork');
-row('explanation', '0 / 30', false, 'false claim: Black just recaptures, Kxe5');
+row('motif', '0 / 15', false, 'a promotion race, not a hanging piece');
+row('explanation', '5 / 30', false, 'judge: the king on f4 defends the queen');
 s.line(X, y - 12, X + 296, y - 10, { stroke: INK.dim, width: 1.2, single: true });
-s.text('55 / 100', X + 296, y + 14, { size: 22, anchor: 'end', weight: 'bold', color: INK.gold });
+s.text('60 / 100', X + 296, y + 14, { size: 22, anchor: 'end', weight: 'bold', color: INK.gold });
 s.text('a move-only benchmark says 100', X, y + 14, { size: 14.5, color: INK.dim });
 s.arrow(X + 120, y + 32, 296, y + 52, { stroke: INK.gold, width: 1.6, bend: -14, head: 9 });
 s.text('right move, wrong reason', 52, 404, { size: 21, weight: 'bold', color: INK.gold, rotate: -2 });
@@ -43,4 +43,4 @@ s.underline(52, 276, 412, { stroke: INK.gold, width: 1.6 });
 
 writeFileSync(new URL('./out/rubric.svg', import.meta.url), s.svg(
   'Grading a real answer: right move, wrong reason',
-  'A chess diagram, White to move. The model played the correct Qxe5+ and gave the correct line, earning 55 of 55 points for move and line, but named the wrong motif and claimed the black queen was undefended when Black simply recaptures with the king. The real idea is trading queens so the d-pawn promotes. The rubric scores it 55 of 100, where a move-only benchmark would give 100.'));
+  'A chess diagram, White to move. A real answer from the final configuration on a dev puzzle: it played the correct Qxe5+ and gave the correct line, earning 55 of 55 points for move and line, but said Black\'s queen on e5 was undefended and tagged the motif as a hanging piece. The black king on f4 defends the queen; the real idea is trading queens so the d-pawn promotes. Motif 0 of 15, explanation 5 of 30: 60 of 100, where a move-only benchmark would give 100.'));

@@ -1,0 +1,1 @@
+{"seconds": 88.3, "exit": 0, "final": "```json\n{\"move\": \"Rd1+\", \"line\": [\"Rd1+\", \"Ka2\", \"Ra1+\", \"Kb2\", \"Rd1\"], \"motifs\": [\"trappedPiece\", \"deflection\"]}\n```", "tool_calls": [], "aiu": 4.9378, "violations": [], "id": "0AYNIm"}

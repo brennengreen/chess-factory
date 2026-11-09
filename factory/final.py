@@ -88,7 +88,7 @@ def total_aiu():
         tot["subject"] += json.loads(p.read_text()).get("aiu") or 0
     for p in (ROOT / "runs/graded").glob("*/*/*/*.json"):
         tot["judge"] += json.loads(p.read_text()).get("judge_aiu") or 0
-    for p in (ROOT / "runs/climb").glob("round*/teacher_aiu.txt"):
+    for p in [*(ROOT / "runs/climb").glob("round*/teacher_aiu.txt"), *(ROOT / "runs/explore").glob("*/teacher_aiu.txt")]:
         try:
             tot["teacher"] += float(p.read_text())
         except ValueError:

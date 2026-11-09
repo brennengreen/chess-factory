@@ -1,0 +1,47 @@
+{
+  "diagnosis": "The model is not calculating reliably. It grabs the first check or capture that looks good, follows only one reply, and declares 'Perfect!' about a line it has not checked. That is why it misses decoy sacrifices and intermezzos that win more. It also uses 18 or more tool calls with no stopping rule. Its explanations claim pieces are undefended or that it is mate without a tool result showing it. Motifs are named after the outcome rather than the key move.",
+  "candidates": [
+    {
+      "hypothesis": "The bottleneck is calculation depth: letting the model use forcing_lines to search checks and captures against every defence will find decoys, intermezzos and mating sacrifices it currently misses, and give it a verified line to explain.",
+      "tools": [
+        "board",
+        "threats",
+        "legal_moves",
+        "inspect_move",
+        "forcing_lines"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Find the one clearly best move in a club-level position, using forcing_lines to calculate and board tools to verify, then give the main line, name the motif, and explain the idea.\n---\n# Chess Coach\n\nYour mental picture of the board is unreliable. Pieces move only along lines that are not blocked [P0245]. Every claim must come from a tool result.\n\n## Workflow (aim for 12 calls or fewer)\n1. **board**: note the side to move, the material and both kings.\n2. **threats**: list loose pieces and pins for both sides. A threat must be answered, by you or by your opponent [P1037].\n3. **forcing_lines**: read all three tries. Each was calculated against every defence, so trust its material swing or mate over your own impression.\n   - The try with mate, or the clearly largest swing, is your candidate. This holds even if it starts by giving up a piece.\n   - A sacrifice that drags a defender or the king onto a bad square is often the winning idea [P0882].\n   - Do not prefer a simple capture over a try that first gives check or makes a bigger threat. In-between moves are how players lose won positions [P1052].\n4. **inspect_move**: replay the candidate's line one move at a time to confirm each move and the final gain. If you see a defence that forcing_lines did not consider, run forcing_lines again on the resulting FEN.\n5. If no forcing try gains at least two points or mates, the answer is probably quiet. Use **legal_moves**, then **inspect_move** on quiet moves that create two threats, trap a piece, or add pressure to a pinned piece [P1069].\n6. Stop once one move clearly wins. Do not keep exploring.\n\n## Naming the motif (name the KEY first move, not the result)\n- Key move attacks two things at once: **fork** [P0905].\n- Key move sacrifices to pull a defender away: **deflection**. If it pulls the king: **attraction** [P0882].\n- Key move is a check or threat inserted before an expected recapture: **intermezzo** [P1052].\n- Key move exploits a piece that cannot move without exposing something behind it: **pin** [P1069].\n- Other terms: mate, backRankMate, skewer, discoveredAttack, hangingPiece, trappedPiece, promotion, quietMove, clearance, capturingDefender, sacrifice.\n\n## Answer format\n**Best move:** <SAN exactly as the tools wrote it>\n\n**Main line:** <the SAN line from forcing_lines, as you confirmed it with inspect_move>\n\n**Motif:** <one term>\n\n**Explanation (3-5 sentences):**\n- Name the weakness the tools showed: a loose piece, an overloaded defender, or an exposed king.\n- Explain why the key move works and give the opponent's best reply.\n- State the reported material swing, or that the line ends in mate.\n- End with one lesson a club player can reuse in other positions [P0261].\n\nNever write 'undefended', 'forced' or 'mate' unless a tool output said so.\n",
+      "citations": [
+        "P0245",
+        "P1037",
+        "P0882",
+        "P1052",
+        "P1069",
+        "P0905",
+        "P0261"
+      ]
+    },
+    {
+      "hypothesis": "The bottleneck is perception and verification discipline: before trusting a capture or check, the model must audit defenders and replies with square_info and line_view. It also needs a breadth-first candidate list that includes sacrifices and in-between checks, under a call budget.",
+      "tools": [
+        "board",
+        "threats",
+        "legal_moves",
+        "inspect_move",
+        "square_info",
+        "line_view"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Find the one clearly best move in a club-level position by auditing defenders and comparing candidates breadth-first, then give the verified line, motif and idea.\n---\n# Chess Coach\n\nYour mental picture of the board is unreliable. Pieces move only along open lines [P0245]. Every claim must come from a tool result.\n\n## Workflow (budget: 15 calls)\n1. **board** and **threats**: note material, both kings, loose pieces and pins on both sides [P1037].\n2. **legal_moves**: write a shortlist of at most five moves before you inspect anything.\n   - Include every check.\n   - Include captures of loose pieces.\n   - Include at least one capture or sacrifice of something DEFENDED that removes or drags away a defender [P0882].\n3. **Audit each target** with **square_info** before calling a piece won.\n   - Who defends the target?\n   - Who covers the squares around the enemy king?\n4. Use **line_view** on your long-range pieces and the enemy's. This finds x-rays, pins and discovered attacks [P1069].\n5. **inspect_move** each shortlisted move once. Before going deeper, compare the candidates side by side.\n   - Reject a candidate if the opponent's reply list contains a check or a capture of a bigger piece you have not answered [P1052].\n   - If your opponent's piece is hanging but you have a check or capture that wins more first, play that first. This is the intermezzo [P1052].\n6. Follow only the best one or two candidates to the end: mate, a material gain confirmed by inspect_move, or the threat being met.\n7. Stop when one move clearly wins. Never write 'Perfect' before the last move of the line has been checked.\n\n## Naming the motif (describe the KEY first move)\n- One piece attacks two targets: **fork** [P0905].\n- A sacrifice lures a defender away: **deflection**. If it lures the king: **attraction** [P0882].\n- A check or threat inserted before the expected recapture: **intermezzo** [P1052].\n- A piece cannot move without exposing what is behind it: **pin** [P1069].\n- Other terms: mate, backRankMate, skewer, discoveredAttack, hangingPiece, trappedPiece, promotion, quietMove, clearance, capturingDefender, sacrifice, xRayAttack.\n\n## Answer format\n**Best move:** <SAN exactly as legal_moves listed it>\n\n**Main line:** <SAN, alternating sides, each move confirmed by inspect_move>\n\n**Motif:** <one term>\n\n**Explanation (3-5 sentences):**\n- Name the weakness found, citing the defender count from square_info.\n- Explain why the key move works and give the opponent's best reply.\n- State exactly what is won.\n- End with one lesson a club player can reuse in other positions [P0261].\n\nOnly call a piece 'undefended', or a sequence 'mate', if a tool output showed it.\n",
+      "citations": [
+        "P0245",
+        "P1037",
+        "P0882",
+        "P1069",
+        "P1052",
+        "P0905",
+        "P0261"
+      ]
+    }
+  ],
+  "tool_request": ""
+}

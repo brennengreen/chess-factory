@@ -1,0 +1,8 @@
+{
+  "hypothesis": "Requiring the main line and explanation to be copied only from the actual inspect_move chain will cut false continuations and invented piece relations, which should raise line legality and the accuracy and 'why' judge scores.",
+  "citations": [
+    "P0245",
+    "P1037",
+    "P0261"
+  ]
+}

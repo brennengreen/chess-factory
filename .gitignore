@@ -2,3 +2,6 @@
 runs/homes/
 data/puzzles_head.csv
 __pycache__/
+figures/node_modules/
+figures/out/*.png
+.DS_Store
