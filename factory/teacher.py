@@ -15,6 +15,8 @@ TOOL_CATALOG = {
     "threats": "Report loose pieces (attacked and undefended, or attacked by a cheaper piece) and pins, for both sides.",
     "inspect_move": "Play one move and describe the result: check or mate, what the moved piece attacks, newly loose "
                     "pieces, the opponent's checks and captures in reply, and the resulting FEN to keep exploring.",
+    "square_info": "Who controls one square: the piece on it, every attacker and defender of each side, and x-ray "
+                   "attackers lined up behind exactly one blocking piece. (Built after the round 1 tool_request.)",
 }
 
 PROMPT = """You are the teacher in a teacher/grader pair. A small model coaches club chess players: given a position it must find the one clearly best move, give the main line, name the motif, and explain the idea. A grader scores it (move 40, line 15, motif 15, explanation 30). Your job is to propose revisions to the model's SKILL.md and its tool set that will raise the score on positions you will never see.

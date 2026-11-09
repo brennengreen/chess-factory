@@ -1,0 +1,12 @@
+{
+  "hypothesis": "The score is held back mainly by perception and legality errors, so a mandatory tool-verification workflow (board, then legal checks and captures, then inspect every candidate and the reply) will fix moves, lines and explanations together.",
+  "citations": [
+    "P0245",
+    "P0905",
+    "P1052",
+    "P0882",
+    "P0844",
+    "P1037",
+    "P0261"
+  ]
+}

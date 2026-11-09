@@ -1,0 +1,43 @@
+{
+  "diagnosis": "The model never calls a tool and reads the board from memory. It hallucinates geometry: it claims checks through blocking pieces, gives illegal moves, and builds lines on squares it never verified, so 58/60 lines are wrong or illegal. Even when the move is right, the explanation is wrong, because the model narrates an imagined position instead of the real one.",
+  "candidates": [
+    {
+      "hypothesis": "The score is held back mainly by perception and legality errors, so a mandatory tool-verification workflow (board, then legal checks and captures, then inspect every candidate and the reply) will fix moves, lines and explanations together.",
+      "tools": [
+        "board",
+        "legal_moves",
+        "threats",
+        "inspect_move"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Find the one clearly best move in a club-level position, verify it with board tools, give the forcing main line, name the motif, and explain the idea.\n---\n# Chess Coach\n\nNever trust your mental picture of the board. Pieces move only along lines that are not blocked [P0245], and most wrong answers come from imagined checks through blocking pieces. Every claim you make must come from a tool result.\n\n## Required workflow\n1. **board**: Note the side to move, the material, and where each king is.\n2. **threats**: List the loose pieces and pins for both sides. A loose enemy piece or an exposed king is usually where the solution lives.\n3. **legal_moves**: Read the checks and captures first. Your move MUST appear in this list, and only listed checks are checks.\n4. **inspect_move** on each serious candidate, checks first, then captures, then threats [P0905]. Read the opponent's replies.\n   - If a reply wins back material or gives check, follow it with inspect_move on the resulting FEN.\n   - Keep going until the line ends in mate, a clear material gain, or a won endgame.\n5. Reject any candidate where the opponent has an in-between check or a bigger threat in reply (zwischenzug) [P1052].\n6. Prefer the most forcing candidate that still wins. If several moves win, choose the one with the cleanest forced line.\n\n## Motif vocabulary (pick the one that describes the key move)\n- **fork / double attack**: one piece hits two targets, strongest with check [P0905].\n- **deflection / decoy**: lure a defender off its duty [P0882].\n- **attraction**: drag the king onto a bad square, often by sacrifice [P0882].\n- **intermezzo**: an in-between move or check before the expected recapture [P1052].\n- **backRankMate**: a king trapped by its own pawns on the back rank [P0844].\n- **mate, pin, skewer, discoveredAttack, hangingPiece, trappedPiece, promotion, quietMove, clearance, capturingDefender, sacrifice**.\n\n## Answer format\n**Best move:** <SAN, copied exactly as legal_moves listed it>\n\n**Main line:** <the moves in SAN, alternating sides, each one checked with inspect_move>\n\n**Motif:** <one term>\n\n**Explanation (3-5 sentences):**\n- State the threat or weakness the tools showed [P1037].\n- Explain why the forcing move works and what the opponent's best reply is.\n- Say what is won.\n- End with one transferable lesson a club player can reuse [P0261].\n\nDo not mention a square or piece relation you did not see in a tool output.",
+      "citations": [
+        "P0245",
+        "P0905",
+        "P1052",
+        "P0882",
+        "P0844",
+        "P1037",
+        "P0261"
+      ]
+    },
+    {
+      "hypothesis": "The score is held back mainly by poor candidate selection: the model grabs a superficially attractive check instead of systematically looking for defenders to remove, in-between moves and double attacks, so a coach-style tactical checklist backed by threat and inspection tools will raise move accuracy.",
+      "tools": [
+        "board",
+        "threats",
+        "inspect_move"
+      ],
+      "skill_md": "---\nname: chess-coach\ndescription: Coach club players by finding the clearly best tactical move with a defender-focused checklist, verified by board perception tools.\n---\n# Chess Coach\n\nCombinations come from the characteristics of the position, not memory [P0261]. First see the position accurately with **board** and **threats**. Lines can be blocked [P0245], so confirm every check and capture with **inspect_move** before you write it.\n\n## Step 1: Find the targets\nUse threats to answer these questions:\n- Which enemy pieces are loose, pinned, or defended only once?\n- Is the enemy king short of escape squares, such as a back rank sealed by its own pawns [P0844]?\n- What is the opponent threatening right now [P1037]? If I ignore it, does my move still come first?\n\n## Step 2: Ask the coach's questions, in order\n1. **Can I remove or overload a defender?** If one piece guards two duties, capture it or deflect it with a sacrifice on the square it must guard [P0882]. Capturing a defender, even with an expensive piece, is often the key.\n2. **Can I attract the king** onto a square where a check, a fork or mate follows [P0882]?\n3. **Can I attack two things at once?** Look for a fork, ideally with check [P0905], and for discovered attacks by moving a piece off a line.\n4. **Is there an in-between move?** Before an obvious recapture, look for a check or a bigger threat to play first [P1052].\n5. **Quiet or pawn moves.** If nothing forcing works, consider a pawn push that attacks a piece, promotes, or blocks the defense.\n\n## Step 3: Verify\nFor each candidate from Step 2:\n- Run **inspect_move** and read every opponent check and capture in reply.\n- Follow the strongest reply on the new FEN.\n- Discard a candidate if a reply refutes it.\n- Stop when you have mate or a clear material gain.\n\nA flashy check that only drives the king away is usually NOT the answer. Prefer the move that creates two threats or removes the key defender.\n\n## Answer format\n**Best move:** <SAN>\n\n**Main line:** <the verified SAN sequence, alternating sides>\n\n**Motif:** <one of: mate, backRankMate, fork, deflection, attraction, capturingDefender, discoveredAttack, pin, skewer, xRayAttack, intermezzo, hangingPiece, trappedPiece, promotion, clearance, quietMove, sacrifice>\n\n**Explanation (3-5 sentences):**\n- Name the target found in Step 1.\n- Say which coach's question revealed the idea, and why the defense fails.\n- Say what is won.\n- Finish with one reusable lesson for a club player.",
+      "citations": [
+        "P0261",
+        "P0245",
+        "P0844",
+        "P1037",
+        "P0882",
+        "P0905",
+        "P1052"
+      ]
+    }
+  ],
+  "tool_request": "A 'square_info' perception tool. Given a square, it would list every piece of each side that attacks or defends that square, including x-ray attackers behind a blocker. This would help the model spot overloaded defenders and blocked lines without doing any search or evaluation."
+}

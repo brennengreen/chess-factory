@@ -125,7 +125,7 @@ def score(det, jd):
                  + W["explanation"] * expl, 2)
 
 
-def grade_run(tag, split, workers=8, judge_tag="judge"):
+def grade_run(tag, split, workers=8, judge_tag="judge", judge_model=None, ids=None):
     items = {json.loads(l)["id"]: json.loads(l) for l in open(ROOT / f"data/{split}.jsonl")}
     sdir = ROOT / "runs/subject" / tag / split
     gdir = ROOT / "runs/graded" / judge_tag / tag / split
@@ -138,7 +138,7 @@ def grade_run(tag, split, workers=8, judge_tag="judge"):
         det = deterministic(it, rec["final"])
         jd = None
         for _ in range(2):
-            jr = run(judge_prompt(it, rec["final"], det), home, [], JUDGE_MODEL, timeout=180)
+            jr = run(judge_prompt(it, rec["final"], det), home, [], judge_model or JUDGE_MODEL, timeout=180)
             jd = parse_judge(jr["final"])
             if jd:
                 break
@@ -148,7 +148,7 @@ def grade_run(tag, split, workers=8, judge_tag="judge"):
         (gdir / path.name).write_text(json.dumps(out))
         return out
 
-    todo = [p for p in sorted(sdir.glob("*.json")) if not (gdir / p.name).exists()]
+    todo = [p for p in sorted(sdir.glob("*.json")) if not (gdir / p.name).exists() and (ids is None or p.stem in ids)]
     with ThreadPoolExecutor(workers) as ex:
         for i, f in enumerate(as_completed([ex.submit(one, p) for p in todo]), 1):
             r = f.result()

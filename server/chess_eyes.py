@@ -136,6 +136,39 @@ def inspect_move(fen: str, move: str) -> str:
     return "\n".join(out)
 
 
+
+def _aligned(piece_type, a, sq):
+    same_line = chess.square_file(a) == chess.square_file(sq) or chess.square_rank(a) == chess.square_rank(sq)
+    diag = abs(chess.square_file(a) - chess.square_file(sq)) == abs(chess.square_rank(a) - chess.square_rank(sq))
+    return (piece_type in (chess.ROOK, chess.QUEEN) and same_line) or (piece_type in (chess.BISHOP, chess.QUEEN) and diag)
+
+
+@mcp.tool()
+def square_info(fen: str, square: str) -> str:
+    """Who controls one square: the piece on it, every piece of each side that attacks or defends it,
+    and x-ray attackers lined up behind exactly one blocking piece. Facts only, no evaluation."""
+    b = _board(fen)
+    try:
+        sq = chess.parse_square(square.strip().lower())
+    except ValueError:
+        return f"{square} is not a square. Use names like e4."
+    p = b.piece_at(sq)
+    out = [f"{chess.square_name(sq)}: " + (_desc(b, sq) if p else "empty")]
+    for c in (b.turn, not b.turn):
+        direct = [_desc(b, a) for a in b.attackers(c, sq)]
+        xray = []
+        for a, q in b.piece_map().items():
+            if q.color != c or a == sq or a in b.attackers(c, sq) or not _aligned(q.piece_type, a, sq):
+                continue
+            blockers = list(chess.SquareSet(chess.between(a, sq)) & chess.SquareSet(b.occupied))
+            if len(blockers) == 1:
+                xray.append(f"{_desc(b, a)} through {_desc(b, blockers[0])}")
+        verb = "defend" if p and p.color == c else "attack"
+        who = "side to move" if c == b.turn else "opponent"
+        out.append(f"{SIDE[c]} ({who}) pieces that {verb} it ({len(direct)}): {', '.join(direct) or 'none'}")
+        out.append(f"{SIDE[c]} x-rays: {'; '.join(xray) or 'none'}")
+    return "\n".join(out)
+
 if __name__ == "__main__":
     enabled = set(filter(None, os.environ.get("CHESS_EYES_TOOLS", "").split(",")))
     if enabled:

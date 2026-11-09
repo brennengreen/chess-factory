@@ -56,7 +56,7 @@ export class Sketch {
     for (const p of this.gen.toPaths(drawable)) {
       p.d = p.d.replace(/(-?\d+\.\d)\d+/g, '$1');
       const fill = p.fill && p.fill !== 'none' ? p.fill : 'none';
-      this.parts.push(`<path d="${p.d}" stroke="${p.stroke}" stroke-width="${p.strokeWidth}" fill="${fill}" stroke-linecap="round" stroke-linejoin="round"${op < 1 ? ` opacity="${op}"` : ''}/>`);
+      this.parts.push(`<path d="${p.d}" stroke="${p.stroke}" stroke-width="${p.strokeWidth}" fill="${fill}" stroke-linecap="round" stroke-linejoin="round"${o.dash ? ` stroke-dasharray="${o.dash}"` : ''}${op < 1 ? ` opacity="${op}"` : ''}/>`);
     }
     return this;
   }
@@ -163,7 +163,7 @@ export class Sketch {
         const name = String.fromCharCode(97 + f) + (8 - r);
         const [cx, cy] = pos(name);
         const white = ch === ch.toUpperCase();
-        const letter = ch.toUpperCase() === 'P' ? 'p' : ch.toUpperCase();
+        const letter = ch.toUpperCase();
         if (white) {
           this.circle(cx, cy, sq * 0.74, { stroke: INK.chalk, width: 1.2, roughness: 1.2, fill: INK.chalk, fillStyle: 'solid' });
           this.text(letter, cx, cy + sq * 0.2, { size: sq * 0.56, anchor: 'middle', weight: 'bold', color: INK.paper });

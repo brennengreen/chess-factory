@@ -6,9 +6,13 @@ const tick = (x, y, c = INK.mint) => { s.line(x, y, x + 6, y + 7, { stroke: c, w
 const cross = (x, y, c = INK.pink) => { s.line(x, y - 8, x + 14, y + 6, { stroke: c, width: 2.4, single: true }); s.line(x + 14, y - 8, x, y + 6, { stroke: c, width: 2.4, single: true }); };
 
 s.text('White to move', 46, 34, { size: 16, color: INK.dim });
+s.circle(206, 29, 9, { stroke: INK.chalk, width: 1, fill: INK.chalk, fillStyle: 'solid' });
+s.text('White', 215, 34, { size: 12, color: INK.faint });
+s.circle(256, 29, 9, { stroke: INK.chalk, width: 1.2, fill: INK.paper, fillStyle: 'solid' });
+s.text('Black', 265, 34, { size: 12, color: INK.faint });
 s.board(46, 46, 232, '8/1p6/p2PQ2p/1n2q3/1P3k1K/8/7P/8 w - - 1 46', {
-  arrows: [{ from: 'e6', to: 'e5', color: INK.pink }, { from: 'd6', to: 'd8', color: INK.mint, bend: -6 }],
-  highlight: [{ sq: 'd8', color: INK.mint }],
+  arrows: [{ from: 'd6', to: 'd8', color: INK.mint, bend: -6 }],
+  highlight: [{ sq: 'd8', color: INK.mint }, { sq: 'e5', color: INK.pink }],
 });
 s.text('1. Qxe5+ Kxe5 2. d7, and it queens', 46, 330, { size: 15, color: INK.mint });
 s.text('(the real idea: trade queens, win the race)', 46, 350, { size: 14, color: INK.faint });

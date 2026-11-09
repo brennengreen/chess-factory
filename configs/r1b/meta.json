@@ -1,0 +1,12 @@
+{
+  "hypothesis": "The score is held back mainly by poor candidate selection: the model grabs a superficially attractive check instead of systematically looking for defenders to remove, in-between moves and double attacks, so a coach-style tactical checklist backed by threat and inspection tools will raise move accuracy.",
+  "citations": [
+    "P0261",
+    "P0245",
+    "P0844",
+    "P1037",
+    "P0882",
+    "P0905",
+    "P1052"
+  ]
+}
