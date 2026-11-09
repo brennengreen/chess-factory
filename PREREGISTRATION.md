@@ -52,3 +52,23 @@ allowlisted session executes only its allowlisted MCP tools.
 
 All v0-bare outputs produced before the fix (dev and test, ungraded) were deleted and regenerated.
 No design, metric, split, or acceptance rule changed.
+
+## Amendment 2 (2026-11-08, after the climb; before any r1a or intervention test output was graded)
+
+The preregistered climb ended with r1a as the final config (round 1 accepted; rounds 2-5 rejected). The
+primary analysis above is unchanged and is still run exactly once.
+
+After the climb, exploratory probes on dev only (DECISIONS.md, `factory/probe.py`, `factory/intervene.py`)
+tested why it stalled. One intervention widened the editable surface with a calculation tool,
+`forcing_lines`, and passed the acceptance rule on dev. Because that candidate was selected on dev, it gets
+one confirmatory look at the sealed test:
+
+- Which config: of x-calc-a and x-calc-b, the one with the larger paired dev gain over r1a, provided its
+  one-sided 95% lower bound is above zero. Decided by `factory/intervene.py` results, before any test run.
+- Data: the 240-item test split, run once. Not test_mirror.
+- Hypothesis: score(calc) - score(r1a) > 0 on test, paired by item. Report the mean difference with a 95%
+  bootstrap CI and the one-sided 95% lower bound (B = 10000, seed 0), the same statistics as the primary.
+- Status: secondary and exploratory. It is reported beside, never in place of, the primary result. The
+  small-edit intervention (x-minimal-*) is reported on dev only.
+- At the time of writing no r1a test or test_mirror output had been graded, and only a handful of
+  v0-bare test grades had scrolled past in a progress log.
