@@ -17,6 +17,9 @@ TOOL_CATALOG = {
                     "pieces, the opponent's checks and captures in reply, and the resulting FEN to keep exploring.",
     "square_info": "Who controls one square: the piece on it, every attacker and defender of each side, and x-ray "
                    "attackers lined up behind exactly one blocking piece. (Built after the round 1 tool_request.)",
+    "line_view": "What one piece sees: for a rook, bishop or queen, the first piece along each line and the piece "
+                 "behind it (pins, x-rays, discovered attacks); for a knight, king or pawn, the pieces it touches. "
+                 "(Built after the round 2 tool_request.)",
 }
 
 PROMPT = """You are the teacher in a teacher/grader pair. A small model coaches club chess players: given a position it must find the one clearly best move, give the main line, name the motif, and explain the idea. A grader scores it (move 40, line 15, motif 15, explanation 30). Your job is to propose revisions to the model's SKILL.md and its tool set that will raise the score on positions you will never see.

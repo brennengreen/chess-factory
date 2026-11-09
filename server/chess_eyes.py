@@ -169,6 +169,49 @@ def square_info(fen: str, square: str) -> str:
         out.append(f"{SIDE[c]} x-rays: {'; '.join(xray) or 'none'}")
     return "\n".join(out)
 
+
+DIRS = {chess.ROOK: [(0, 1), (0, -1), (1, 0), (-1, 0)], chess.BISHOP: [(1, 1), (1, -1), (-1, 1), (-1, -1)]}
+DIRS[chess.QUEEN] = DIRS[chess.ROOK] + DIRS[chess.BISHOP]
+DNAME = {(0, 1): "up the board", (0, -1): "down the board", (1, 0): "toward the h-file", (-1, 0): "toward the a-file",
+         (1, 1): "up-right", (1, -1): "down-right", (-1, 1): "up-left", (-1, -1): "down-left"}
+
+
+@mcp.tool()
+def line_view(fen: str, square: str) -> str:
+    """What one piece sees. For a rook, bishop or queen: along each line, the first piece it meets and the
+    piece directly behind that one (the x-ray), which makes pins and discovered attacks visible. For a
+    knight, king or pawn: the pieces it attacks. Facts only, no evaluation."""
+    b = _board(fen)
+    try:
+        sq = chess.parse_square(square.strip().lower())
+    except ValueError:
+        return f"{square} is not a square. Use names like e4."
+    p = b.piece_at(sq)
+    if not p:
+        return f"{chess.square_name(sq)} is empty."
+    out = [_desc(b, sq) + ":"]
+    if p.piece_type in DIRS:
+        for df, dr in DIRS[p.piece_type]:
+            f, r, hits = chess.square_file(sq), chess.square_rank(sq), []
+            while len(hits) < 2:
+                f, r = f + df, r + dr
+                if not (0 <= f < 8 and 0 <= r < 8):
+                    break
+                t = chess.square(f, r)
+                if b.piece_at(t):
+                    hits.append(t)
+            if hits:
+                line = f"  {DNAME[(df, dr)]}: first {_desc(b, hits[0])}"
+                if len(hits) > 1:
+                    line += f", behind it {_desc(b, hits[1])}"
+                out.append(line)
+        if len(out) == 1:
+            out.append("  every line is open to the edge of the board")
+    else:
+        hit = [_desc(b, t) for t in b.attacks(sq) if b.piece_at(t)]
+        out.append("  touches: " + (", ".join(hit) or "no pieces"))
+    return "\n".join(out)
+
 if __name__ == "__main__":
     enabled = set(filter(None, os.environ.get("CHESS_EYES_TOOLS", "").split(",")))
     if enabled:
